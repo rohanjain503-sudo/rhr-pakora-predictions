@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>RHR Pakora Predictions</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #f5f5f3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; }
+
+    .app { max-width: 440px; margin: 0 auto; padding: 1rem; min-height: 100vh; }
+
+    .header { text-align: center; padding: 2rem 0 1.25rem; border-bottom: 1px solid #e5e5e3; margin-bottom: 1.5rem; }
+    .header h1 { font-size: 18px; font-weight: 600; color: #1a1a1a; letter-spacing: 0.01em; }
+    .header p { font-size: 12px; color: #888; margin-top: 4px; }
+    .header-user { font-size: 12px; color: #888; margin-top: 6px; display: none; }
+    .header-user span { color: #1a6bb5; font-weight: 500; }
+
+    .step-indicator { display: flex; justify-content: center; gap: 6px; margin-bottom: 1.5rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; transition: background 0.3s; }
+    .dot.active { background: #1a6bb5; }
+    .dot.done { background: #1a9e6e; }
+
+    .screen { display: none; }
+    .screen.visible { display: block; }
+
+    .section-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+    .section-sub { font-size: 13px; color: #888; margin-bottom: 1.25rem; }
+
+    .field { margin-bottom: 1rem; }
+    .label { font-size: 12px; color: #666; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.02em; display: block; }
+
+    input, select {
+      width: 100%; padding: 11px 13px; font-size: 15px;
+      border: 1px solid #ddd; border-radius: 10px;
+      background: #fff; color: #1a1a1a;
+      font-family: inherit; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none; -webkit-appearance: none;
+    }
+    input:focus, select:focus { border-color: #1a6bb5; box-shadow: 0 0 0 3px rgba(26,107,181,0.12); }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px; }
+    select option:disabled { color: #bbb; }
+
+    .btn {
+      width: 100%; padding: 13px; font-size: 15px; font-weight: 600;
+      border: 1px solid #ddd; border-radius: 10px;
+      background: #fff; color: #1a1a1a;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s, border-color 0.15s;
+      margin-top: 0.5rem;
+    }
+    .btn:hover:not(:disabled) { background: #f5f5f3; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn.primary { background: #1a6bb5; border-color: #1a6bb5; color: #fff; }
+    .btn.primary:hover:not(:disabled) { background: #155a9a; border-color: #155a9a; }
+    .btn.success { background: #1a9e6e; border-color: #1a9e6e; color: #fff; }
+    .btn.success:hover:not(:disabled) { background: #157a55; border-color: #157a55; }
+    .btn.danger { border-color: #e24b4a; color: #a32d2d; background: #fff; }
+    .btn.danger:hover { background: #fff5f5; }
+
+    .btn-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; margin-top: 0.5rem; }
+    .btn-back {
+      padding: 13px 16px; font-size: 15px; font-weight: 500;
+      border: 1px solid #ddd; border-radius: 10px;
+      background: #fff; color: #888;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn-back:hover { background: #f5f5f3; }
+
+    .pending-banner { background: #fffbf0; border: 1px solid #f0c060; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+    .pending-banner p { font-size: 13px; color: #7a5500; line-height: 1.6; }
+
+    .api-status { font-size: 12px; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; display: none; line-height: 1.5; }
+    .api-status.loading { display: block; background: #eef4fd; color: #1a6bb5; }
+    .api-status.error { display: block; background: #fff0f0; color: #a32d2d; }
+
+    .err-text { font-size: 13px; color: #a32d2d; margin-top: 6px; display: none; }
+
+    /* Alliance cards */
+    .alliance-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+    .alliance-card {
+      border-radius: 12px; border: 2px solid #e5e5e3;
+      background: #fafaf8; cursor: pointer; padding: 12px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .alliance-card:hover { border-color: #ccc; }
+    .alliance-card.red-sel { border-color: #d85a30; background: #fff5f0; }
+    .alliance-card.blue-sel { border-color: #378add; background: #f0f6ff; }
+    .alliance-header { font-size: 13px; font-weight: 600; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .alliance-card.red-sel .alliance-header { color: #993c1d; border-color: rgba(216,90,48,0.2); }
+    .alliance-card.blue-sel .alliance-header { color: #185fa5; border-color: rgba(55,138,221,0.2); }
+    .alliance-header-red { color: #d85a30; }
+    .alliance-header-blue { color: #378add; }
+    .team-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+    .station-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot-red { background: #d85a30; }
+    .dot-blue { background: #378add; }
+    .team-num { font-size: 13px; color: #1a1a1a; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .team-station { font-size: 11px; color: #aaa; margin-left: auto; }
+    .team-highlight { font-weight: 600; color: #1a6bb5; }
+    .team-placeholder { font-size: 12px; color: #aaa; font-style: italic; }
+
+    /* Summary */
+    .summary-card { background: #fafaf8; border: 1px solid #e5e5e3; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid #f0f0ee; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row span:first-child { color: #888; }
+    .summary-row span:last-child { font-weight: 500; color: #1a1a1a; }
+    .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 6px; font-weight: 500; }
+    .badge-red { background: #fff0ea; color: #993c1d; }
+    .badge-blue { background: #eef4fd; color: #185fa5; }
+
+    .success-icon { text-align: center; font-size: 40px; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>RHR Pakora Predictions</h1>
+    <p>Team 1241 · FRC 2026</p>
+    <div class="header-user" id="header-user">Signed in as <span id="header-name"></span></div>
+  </div>
+
+  <div class="step-indicator">
+    <div class="dot active" id="d0"></div>
+    <div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+    <div class="dot" id="d4"></div>
+  </div>
+
+  <!-- Screen 0: Register -->
+  <div class="screen visible" id="s0">
+    <div class="section-title">Create account</div>
+    <div class="section-sub">No email needed — just your name</div>
+    <div class="field"><label class="label">First name</label><input type="text" id="fname" placeholder="e.g. Alex" autocomplete="given-name" /></div>
+    <div class="field"><label class="label">Last name</label><input type="text" id="lname" placeholder="e.g. Smith" autocomplete="family-name" /></div>
+    <div class="err-text" id="err0"></div>
+    <button class="btn primary" style="margin-top:0.75rem;" id="btn-register" onclick="register()">Create account</button>
+  </div>
+
+  <!-- Screen 1: Pending -->
+  <div class="screen" id="s1">
+    <div class="pending-banner">
+      <p><strong id="welcome-name"></strong>, your account is pending admin verification.<br>You'll be able to continue once an admin approves you.</p>
+    </div>
+    <div class="section-sub" style="text-align:center;margin-top:1rem;font-size:12px;">Check back here after an admin approves you.</div>
+    <button class="btn-back" style="width:100%;margin-top:1rem;" onclick="setScreen(0)">← Back</button>
+  </div>
+
+  <!-- Screen 2: Select Event -->
+  <div class="screen" id="s2">
+    <div class="section-title">Select an event</div>
+    <div class="api-status" id="event-status"></div>
+    <div class="section-sub" id="event-sub"></div>
+    <div class="field">
+      <label class="label">Event</label>
+      <select id="event-select" onchange="onEventChange()">
+        <option value="">— choose event —</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goBackFromEvents()">← Back</button>
+      <button class="btn primary" id="btn-event" onclick="goToMatches()" disabled>Next</button>
+    </div>
+    <button class="btn danger" style="margin-top:1.5rem;" onclick="signOut()">Sign out</button>
+  </div>
+
+  <!-- Screen 3: Select Match -->
+  <div class="screen" id="s3">
+    <div class="section-title">Select a match</div>
+    <div class="api-status" id="match-status"></div>
+    <div class="section-sub" id="match-sub"></div>
+    <div class="field">
+      <label class="label">Match</label>
+      <select id="match-select" onchange="onMatchChange()">
+        <option value="">— choose match —</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goBackToEvents()">← Back</button>
+      <button class="btn primary" id="btn-match" onclick="goToPrediction()" disabled>Next</button>
+    </div>
+  </div>
+
+  <!-- Screen 4: Prediction -->
+  <div class="screen" id="s4">
+    <div class="section-title">Make your prediction</div>
+    <div class="section-sub" id="pred-sub"></div>
+    <div class="field">
+      <label class="label">Winning alliance</label>
+      <div class="alliance-row">
+        <div class="alliance-card" id="card-red" onclick="selectAlliance('red')">
+          <div class="alliance-header alliance-header-red">Red Alliance</div>
+          <div id="red-teams"><div class="team-placeholder">loading…</div></div>
+        </div>
+        <div class="alliance-card" id="card-blue" onclick="selectAlliance('blue')">
+          <div class="alliance-header alliance-header-blue">Blue Alliance</div>
+          <div id="blue-teams"><div class="team-placeholder">loading…</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Score delta</label>
+      <input type="number" id="score-delta" placeholder="e.g. 12" min="0" oninput="checkSubmit()" />
+    </div>
+    <div class="err-text" id="err4"></div>
+    <div class="btn-row" style="margin-top:0.5rem;">
+      <button class="btn-back" onclick="goBackToMatches()">← Back</button>
+      <button class="btn success" id="btn-submit" onclick="submitPrediction()" disabled>Submit</button>
+    </div>
+  </div>
+
+  <!-- Screen 5: Confirmation -->
+  <div class="screen" id="s5">
+    <div class="success-icon">🎯</div>
+    <div class="section-title" style="text-align:center;margin-bottom:0.75rem;">Prediction submitted!</div>
+    <div class="summary-card" id="summary"></div>
+    <button class="btn" onclick="newPrediction()">Make another prediction</button>
+    <button class="btn-back" style="width:100%;margin-top:8px;" onclick="goBackToMatches()">← Change match</button>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://oxrkddktjxbmyeqjitnv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94cmtkZGt0anhibXllcWppdG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjEwNjksImV4cCI6MjA4OTU5NzA2OX0.QVhBhrBvZHI9mSytjqnZ4pyA3qzGL6JuNqEGS1SOKZk';
+const PROXY  = SUPA_URL + '/functions/v1/frc-proxy';
+const TEAM = 1241, SEASON = 2026, SESSION_KEY = 'rhrpakora_user';
+
+const state = { userId:null, user:null, eventCode:null, eventName:null, matchNumber:null, matchDescription:null, alliance:null, scoreDelta:null };
+let matchCache = {};
+let submittedMatches = new Set();
+
+const saveSession = (u,f,l) => { try { localStorage.setItem(SESSION_KEY, JSON.stringify({userId:u,firstName:f,lastName:l})); } catch{} };
+const loadSession = () => { try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; } };
+const clearSession = () => { try { localStorage.removeItem(SESSION_KEY); } catch{} };
+
+const supa = {
+  async query(path, method='GET', body=null) {
+    const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+      method,
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': method==='POST' ? 'return=representation' : '' },
+      body: body ? JSON.stringify(body) : null
+    });
+    if (!res.ok) { const e = await res.text(); throw new Error(e); }
+    return res.json();
+  }
+};
+
+const frcFetch = async (path) => {
+  const res = await fetch(PROXY + '?path=' + encodeURIComponent(path), { headers: { 'Authorization': 'Bearer ' + SUPA_KEY } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+};
+
+const setScreen = (n) => {
+  document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('visible', i===n));
+  document.querySelectorAll('.dot').forEach((d,i) => { d.classList.toggle('active', i===n); d.classList.toggle('done', i<n); });
+};
+
+const showHeaderUser = (name) => { document.getElementById('header-user').style.display='block'; document.getElementById('header-name').textContent=name; };
+const hideHeaderUser = () => { document.getElementById('header-user').style.display='none'; };
+const showErr = (id, msg) => { const el=document.getElementById(id); el.textContent=msg; el.style.display=msg?'block':'none'; };
+
+async function boot() {
+  const session = loadSession();
+  if (!session) { setScreen(0); return; }
+  try {
+    const rows = await supa.query('users?id=eq.' + session.userId + '&select=id,first_name,last_name,is_verified');
+    if (!rows.length) { clearSession(); setScreen(0); return; }
+    const user = rows[0];
+    state.userId = user.id;
+    state.user = { firstName: user.first_name, lastName: user.last_name };
+    if (!user.is_verified) {
+      document.getElementById('welcome-name').textContent = user.first_name + ' ' + user.last_name;
+      setScreen(1); return;
+    }
+    showHeaderUser(user.first_name + ' ' + user.last_name);
+    setScreen(2); loadEvents();
+  } catch(e) { clearSession(); setScreen(0); }
+}
+
+async function register() {
+  const fn = document.getElementById('fname').value.trim();
+  const ln = document.getElementById('lname').value.trim();
+  if (!fn || !ln) { showErr('err0', 'Please enter your first and last name.'); return; }
+  showErr('err0', '');
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try {
+    const rows = await supa.query('users', 'POST', { first_name: fn, last_name: ln, is_verified: false });
+    state.userId = rows[0].id;
+    state.user = { firstName: fn, lastName: ln };
+    saveSession(state.userId, fn, ln);
+    document.getElementById('welcome-name').textContent = fn + ' ' + ln;
+    setScreen(1);
+  } catch(e) { showErr('err0', 'Could not create account: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Create account'; }
+}
+
+function signOut() {
+  clearSession();
+  Object.assign(state, { userId:null, user:null, eventCode:null, matchNumber:null, alliance:null, scoreDelta:null });
+  matchCache = {}; submittedMatches = new Set();
+  hideHeaderUser();
+  document.getElementById('fname').value = '';
+  document.getElementById('lname').value = '';
+  setScreen(0);
+}
+
+function goBackFromEvents() { if (!loadSession()) setScreen(1); }
+
+async function loadSubmittedMatches(eventCode) {
+  submittedMatches = new Set();
+  if (!state.userId || !eventCode) return;
+  try {
+    const rows = await supa.query('predictions?user_id=eq.' + state.userId + '&event_code=eq.' + eventCode + '&select=match_number');
+    rows.forEach(r => submittedMatches.add(String(r.match_number)));
+  } catch(e) { console.warn('Could not load submitted matches', e); }
+}
+
+async function loadEvents() {
+  const statusEl = document.getElementById('event-status');
+  const sel = document.getElementById('event-select');
+  sel.innerHTML = '<option value="">— loading… —</option>'; sel.disabled = true;
+  document.getElementById('btn-event').disabled = true;
+  statusEl.className = 'api-status loading'; statusEl.textContent = 'Fetching events for Team ' + TEAM + '…';
+  try {
+    const data = await frcFetch(SEASON + '/events?teamNumber=' + TEAM);
+    const events = data.Events || [];
+    statusEl.className = 'api-status'; statusEl.style.display = 'none';
+    document.getElementById('event-sub').textContent = events.length + ' event(s) found for Team ' + TEAM;
+    sel.innerHTML = '<option value="">— choose event —</option>';
+    events.forEach(e => {
+      const o = document.createElement('option');
+      o.value = e.code; o.dataset.name = e.name;
+      o.textContent = e.code + ' — ' + e.name;
+      if (e.code === state.eventCode) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+    document.getElementById('btn-event').disabled = !state.eventCode;
+  } catch(e) {
+    statusEl.className = 'api-status error'; statusEl.textContent = 'Failed to load events: ' + e.message;
+    sel.innerHTML = '<option value="">— unavailable —</option>'; sel.disabled = false;
+  }
+}
+
+function onEventChange() {
+  const sel = document.getElementById('event-select');
+  state.eventCode = sel.value; state.eventName = sel.options[sel.selectedIndex]?.dataset?.name || '';
+  document.getElementById('btn-event').disabled = !state.eventCode;
+  state.matchNumber = null; matchCache = {}; submittedMatches = new Set();
+}
+
+function goToMatches() { if (!state.eventCode) return; setScreen(3); loadMatches(); }
+
+async function loadMatches() {
+  const statusEl = document.getElementById('match-status');
+  const sel = document.getElementById('match-select');
+  sel.innerHTML = '<option value="">— loading… —</option>'; sel.disabled = true;
+  document.getElementById('btn-match').disabled = true;
+  statusEl.className = 'api-status loading'; statusEl.textContent = 'Fetching qualification matches…';
+  try {
+    const [data] = await Promise.all([
+      frcFetch(SEASON + '/schedule/' + state.eventCode + '?tournamentLevel=Qualification&teamNumber=' + TEAM),
+      loadSubmittedMatches(state.eventCode)
+    ]);
+    const matches = data.Schedule || [];
+    statusEl.className = 'api-status'; statusEl.style.display = 'none';
+    const remaining = matches.length - submittedMatches.size;
+    document.getElementById('match-sub').textContent = matches.length + ' match(es) · ' + submittedMatches.size + ' predicted · ' + remaining + ' remaining';
+    matchCache = {};
+    matches.forEach(m => { matchCache[m.matchNumber] = m; });
+    sel.innerHTML = '<option value="">— choose match —</option>';
+    matches.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.matchNumber;
+      const already = submittedMatches.has(String(m.matchNumber));
+      o.textContent = (m.description || 'Qualification ' + m.matchNumber) + (already ? ' ✓' : '');
+      o.disabled = already;
+      if (already) o.style.color = '#bbb';
+      if (String(m.matchNumber) === String(state.matchNumber) && !already) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+    document.getElementById('btn-match').disabled = !state.matchNumber || submittedMatches.has(String(state.matchNumber));
+  } catch(e) {
+    statusEl.className = 'api-status error'; statusEl.textContent = 'Failed to load matches: ' + e.message;
+    sel.innerHTML = '<option value="">— unavailable —</option>'; sel.disabled = false;
+  }
+}
+
+function onMatchChange() {
+  const sel = document.getElementById('match-select');
+  state.matchNumber = sel.value;
+  state.matchDescription = (sel.options[sel.selectedIndex]?.textContent || '').replace(' ✓', '');
+  document.getElementById('btn-match').disabled = !state.matchNumber || submittedMatches.has(String(state.matchNumber));
+}
+
+function goToPrediction() {
+  if (!state.matchNumber) return;
+  const match = matchCache[state.matchNumber];
+  renderAllianceTeams(match?.teams || []);
+  document.getElementById('pred-sub').textContent = state.matchDescription || 'Qualification ' + state.matchNumber;
+  state.alliance = null; state.scoreDelta = null;
+  document.getElementById('card-red').className = 'alliance-card';
+  document.getElementById('card-blue').className = 'alliance-card';
+  document.getElementById('score-delta').value = '';
+  checkSubmit(); setScreen(4);
+}
+
+function renderAllianceTeams(teams) {
+  const s = { Red1:null, Red2:null, Red3:null, Blue1:null, Blue2:null, Blue3:null };
+  teams.forEach(t => { if (s.hasOwnProperty(t.station)) s[t.station] = t.teamNumber; });
+  const row = (station, dotCls) => `<div class="team-row"><div class="station-dot ${dotCls}"></div><span class="team-num${s[station]===TEAM?' team-highlight':''}">${s[station]||'—'}</span><span class="team-station">${station}</span></div>`;
+  document.getElementById('red-teams').innerHTML = row('Red1','dot-red') + row('Red2','dot-red') + row('Red3','dot-red');
+  document.getElementById('blue-teams').innerHTML = row('Blue1','dot-blue') + row('Blue2','dot-blue') + row('Blue3','dot-blue');
+}
+
+function goBackToEvents() { setScreen(2); }
+function goBackToMatches() { setScreen(3); loadMatches(); }
+
+function selectAlliance(a) {
+  state.alliance = a;
+  document.getElementById('card-red').className = 'alliance-card' + (a==='red' ? ' red-sel' : '');
+  document.getElementById('card-blue').className = 'alliance-card' + (a==='blue' ? ' blue-sel' : '');
+  checkSubmit();
+}
+
+function checkSubmit() {
+  const delta = document.getElementById('score-delta').value;
+  document.getElementById('btn-submit').disabled = !(state.alliance && delta !== '');
+}
+
+async function submitPrediction() {
+  state.scoreDelta = document.getElementById('score-delta').value;
+  if (!state.alliance || !state.scoreDelta) return;
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Saving…'; showErr('err4', '');
+  const match = matchCache[state.matchNumber];
+  const teams = match?.teams || [];
+  const getTeam = s => teams.find(t => t.station === s)?.teamNumber || null;
+  try {
+    await supa.query('predictions', 'POST', {
+      user_id: state.userId, team_number: TEAM, season: SEASON,
+      event_code: state.eventCode, match_number: parseInt(state.matchNumber),
+      match_description: state.matchDescription || null,
+      winning_alliance: state.alliance, score_delta: parseInt(state.scoreDelta),
+      red1: getTeam('Red1'), red2: getTeam('Red2'), red3: getTeam('Red3'),
+      blue1: getTeam('Blue1'), blue2: getTeam('Blue2'), blue3: getTeam('Blue3')
+    });
+    submittedMatches.add(String(state.matchNumber));
+    const badgeClass = state.alliance === 'red' ? 'badge-red' : 'badge-blue';
+    const allianceLabel = state.alliance === 'red' ? 'Red Alliance' : 'Blue Alliance';
+    document.getElementById('summary').innerHTML = `
+      <div class="summary-row"><span>User</span><span>${state.user.firstName} ${state.user.lastName}</span></div>
+      <div class="summary-row"><span>Event</span><span>${state.eventCode}</span></div>
+      <div class="summary-row"><span>Match</span><span>${state.matchDescription || 'Qualification ' + state.matchNumber}</span></div>
+      <div class="summary-row"><span>Red alliance</span><span>${[getTeam('Red1'),getTeam('Red2'),getTeam('Red3')].filter(Boolean).join(', ')||'—'}</span></div>
+      <div class="summary-row"><span>Blue alliance</span><span>${[getTeam('Blue1'),getTeam('Blue2'),getTeam('Blue3')].filter(Boolean).join(', ')||'—'}</span></div>
+      <div class="summary-row"><span>Winner predicted</span><span><span class="badge ${badgeClass}">${allianceLabel}</span></span></div>
+      <div class="summary-row"><span>Score delta</span><span>${parseInt(state.scoreDelta)}</span></div>`;
+    setScreen(5);
+  } catch(e) {
+    if (e.message.includes('unique') || e.message.includes('duplicate')) {
+      showErr('err4', 'You already submitted a prediction for this match.');
+      submittedMatches.add(String(state.matchNumber));
+    } else { showErr('err4', 'Failed to save: ' + e.message); }
+    btn.disabled = false; btn.textContent = 'Submit';
+  }
+}
+
+function newPrediction() {
+  Object.assign(state, { eventCode:null, eventName:null, matchNumber:null, matchDescription:null, alliance:null, scoreDelta:null });
+  matchCache = {}; submittedMatches = new Set();
+  document.getElementById('card-red').className = 'alliance-card';
+  document.getElementById('card-blue').className = 'alliance-card';
+  document.getElementById('score-delta').value = '';
+  document.getElementById('red-teams').innerHTML = '<div class="team-placeholder">Select a match</div>';
+  document.getElementById('blue-teams').innerHTML = '<div class="team-placeholder">Select a match</div>';
+  setScreen(2); loadEvents();
+}
+
+boot();
+</script>
+</body>
+</html>
