@@ -342,7 +342,7 @@ async function loadResults() {
   panel.innerHTML='<div class="api-status loading" style="display:block;">Loading match results and predictions…</div>';
   try {
     const [matchData, predictions] = await Promise.all([
-      frcFetch(SEASON+'/matches/'+adminState.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM+'&matchNumber='+adminState.matchNumber),
+      frcFetch(SEASON+'/matches/'+adminState.eventCode+'?tournamentLevel=Qualification&matchNumber='+adminState.matchNumber),
       supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)')
     ]);
 
