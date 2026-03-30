@@ -7,55 +7,37 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; background: #f5f5f3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; }
-
     .app { max-width: 480px; margin: 0 auto; padding: 1rem; min-height: 100vh; }
-
     .header { text-align: center; padding: 2rem 0 1.25rem; border-bottom: 1px solid #e5e5e3; margin-bottom: 1.5rem; }
     .header h1 { font-size: 18px; font-weight: 600; color: #1a1a1a; }
     .header p { font-size: 12px; color: #888; margin-top: 4px; }
-
     .screen { display: none; }
     .screen.visible { display: block; }
-
     .section-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
     .section-sub { font-size: 13px; color: #888; margin-bottom: 1.25rem; }
-
     .field { margin-bottom: 1rem; }
     .label { font-size: 12px; color: #666; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.02em; display: block; }
-
-    input, select {
-      width: 100%; padding: 11px 13px; font-size: 15px;
-      border: 1px solid #ddd; border-radius: 10px;
-      background: #fff; color: #1a1a1a; font-family: inherit; outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      appearance: none; -webkit-appearance: none;
-    }
+    input, select { width: 100%; padding: 11px 13px; font-size: 15px; border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #1a1a1a; font-family: inherit; outline: none; transition: border-color 0.15s, box-shadow 0.15s; appearance: none; -webkit-appearance: none; }
     input:focus, select:focus { border-color: #1a6bb5; box-shadow: 0 0 0 3px rgba(26,107,181,0.12); }
     select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px; }
-
     .btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 600; border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #1a1a1a; cursor: pointer; font-family: inherit; transition: background 0.15s; margin-top: 0.5rem; }
     .btn:hover:not(:disabled) { background: #f5f5f3; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn.primary { background: #1a6bb5; border-color: #1a6bb5; color: #fff; }
     .btn.primary:hover:not(:disabled) { background: #155a9a; }
+    .btn.success { background: #1a9e6e; border-color: #1a9e6e; color: #fff; }
+    .btn.success:hover:not(:disabled) { background: #157a55; }
     .btn.danger { border-color: #e24b4a; color: #a32d2d; }
     .btn.danger:hover { background: #fff5f5; }
-
+    .btn.sm { padding: 8px 16px; font-size: 13px; width: auto; margin-top: 0; }
     .err-text { font-size: 13px; color: #a32d2d; margin-top: 6px; display: none; }
     .api-status { font-size: 12px; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; display: none; }
     .api-status.loading { display: block; background: #eef4fd; color: #1a6bb5; }
     .api-status.error { display: block; background: #fff0f0; color: #a32d2d; }
-
-    /* Tabs */
+    .api-status.success { display: block; background: #f0faf5; color: #0d6e44; }
     .tabs { display: flex; border-bottom: 1px solid #e5e5e3; margin-bottom: 1.25rem; }
-    .tab { padding: 9px 18px; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s; }
+    .tab { padding: 9px 18px; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
     .tab.active { color: #1a6bb5; border-bottom-color: #1a6bb5; }
-    .tab:hover:not(.active) { color: #444; }
-
-    /* Auth tabs */
-    .auth-tabs { display: flex; border-bottom: 1px solid #e5e5e3; margin-bottom: 1.25rem; }
-
-    /* Score cards */
     .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
     .score-card { border-radius: 12px; padding: 16px 12px; text-align: center; border: 2px solid #eee; }
     .score-card.red { border-color: #d85a30; background: #fff5f0; }
@@ -69,16 +51,11 @@
     .score-card.blue .score-num { color: #185fa5; }
     .score-delta-display { font-size: 13px; color: #888; text-align: center; margin-bottom: 1.25rem; }
     .score-delta-display strong { color: #1a1a1a; }
-
-    /* Winner announcement */
     .winner-announce { background: #f0faf5; border: 1px solid #1a9e6e; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
     .winner-announce .w-label { font-size: 10px; font-weight: 700; color: #1a9e6e; letter-spacing: 0.08em; margin-bottom: 4px; }
     .winner-announce .w-name { font-size: 20px; font-weight: 700; color: #0d5c3e; }
     .winner-announce .w-detail { font-size: 12px; color: #1a9e6e; margin-top: 4px; }
-
     .no-data { background: #fafaf8; border: 1px solid #e5e5e3; border-radius: 10px; padding: 1rem; font-size: 13px; color: #888; text-align: center; margin-bottom: 1rem; }
-
-    /* Predictions table */
     .table-wrap { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow: hidden; margin-bottom: 1rem; }
     .pred-table { width: 100%; font-size: 13px; border-collapse: collapse; }
     .pred-table th { font-size: 11px; font-weight: 600; color: #888; text-align: left; padding: 9px 12px; background: #fafaf8; border-bottom: 1px solid #e5e5e3; letter-spacing: 0.03em; }
@@ -90,18 +67,20 @@
     .badge-blue { background: #eef4fd; color: #185fa5; }
     .badge-correct { background: #e8f9f0; color: #0d6e44; }
     .badge-wrong { background: #fff0f0; color: #a32d2d; }
-    .delta-diff-val { font-size: 12px; color: #888; }
-
-    /* Users list */
+    .pts-badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #fff8e6; color: #8a6000; }
     .user-card { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow: hidden; }
     .user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #f0f0ee; }
     .user-row:last-child { border-bottom: none; }
-    .user-name { font-size: 14px; font-weight: 500; color: #1a1a1a; }
-    .user-date { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .user-name { font-size: 14px; font-weight: 500; }
+    .user-email { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .user-date { font-size: 11px; color: #aaa; }
     .verify-btn { padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; font-family: inherit; border: 1px solid; transition: background 0.15s; }
     .verify-btn.approve { border-color: #1a9e6e; color: #0d6e44; background: #fff; }
     .verify-btn.approve:hover { background: #f0faf5; }
-    .verify-btn.verified { border-color: #ddd; color: #aaa; background: #fafaf8; cursor: default; font-weight: 500; }
+    .verify-btn.verified { border-color: #ddd; color: #aaa; background: #fafaf8; cursor: default; }
+    .pts-calc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .pts-status { font-size: 12px; color: #888; }
+    .pts-status.done { color: #1a9e6e; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -113,11 +92,10 @@
 
   <!-- Screen 0: Auth -->
   <div class="screen visible" id="s0">
-    <div class="tabs auth-tabs">
+    <div class="tabs" style="margin-bottom:1.25rem;">
       <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign in</div>
       <div class="tab" id="tab-reg" onclick="switchTab('reg')">Register admin</div>
     </div>
-
     <div id="form-login">
       <div class="section-sub">Sign in to your admin account</div>
       <div class="field"><label class="label">First name</label><input type="text" id="login-fname" placeholder="First name" /></div>
@@ -126,7 +104,6 @@
       <div class="err-text" id="err-login"></div>
       <button class="btn primary" id="btn-login" onclick="adminLogin()">Sign in</button>
     </div>
-
     <div id="form-reg" style="display:none;">
       <div class="section-sub">Create the admin account — only one admin allowed</div>
       <div class="field"><label class="label">First name</label><input type="text" id="reg-fname" placeholder="First name" /></div>
@@ -148,19 +125,9 @@
     <!-- Results tab -->
     <div id="dash-results">
       <div class="api-status" id="event-status"></div>
-      <div class="field">
-        <label class="label">Event</label>
-        <select id="event-select" onchange="onEventChange()">
-          <option value="">— choose event —</option>
-        </select>
-      </div>
+      <div class="field"><label class="label">Event</label><select id="event-select" onchange="onEventChange()"><option value="">— choose event —</option></select></div>
       <div class="api-status" id="match-status"></div>
-      <div class="field" id="match-field" style="display:none;">
-        <label class="label">Match</label>
-        <select id="match-select" onchange="onMatchChange()">
-          <option value="">— choose match —</option>
-        </select>
-      </div>
+      <div class="field" id="match-field" style="display:none;"><label class="label">Match</label><select id="match-select" onchange="onMatchChange()"><option value="">— choose match —</option></select></div>
       <div id="results-panel"></div>
     </div>
 
@@ -179,273 +146,269 @@ const SUPA_URL = 'https://oxrkddktjxbmyeqjitnv.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94cmtkZGt0anhibXllcWppdG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjEwNjksImV4cCI6MjA4OTU5NzA2OX0.QVhBhrBvZHI9mSytjqnZ4pyA3qzGL6JuNqEGS1SOKZk';
 const PROXY = SUPA_URL + '/functions/v1/frc-proxy';
 const TEAM = 1241, SEASON = 2026, ADMIN_KEY = 'rhrpakora_admin';
+let matchCache={}, adminState={eventCode:null,matchNumber:null,matchDescription:null};
 
-let matchCache = {};
-let adminState = { eventCode:null, matchNumber:null, matchDescription:null };
-
-const saveAdminSession = (id,fn,ln) => { try { localStorage.setItem(ADMIN_KEY, JSON.stringify({id,fn,ln})); } catch{} };
-const loadAdminSession = () => { try { return JSON.parse(localStorage.getItem(ADMIN_KEY)); } catch { return null; } };
-const clearAdminSession = () => { try { localStorage.removeItem(ADMIN_KEY); } catch{} };
+const saveAdminSession = (id,fn,ln)=>{try{localStorage.setItem(ADMIN_KEY,JSON.stringify({id,fn,ln}));}catch{}};
+const loadAdminSession = ()=>{try{return JSON.parse(localStorage.getItem(ADMIN_KEY));}catch{return null;}};
+const clearAdminSession = ()=>{try{localStorage.removeItem(ADMIN_KEY);}catch{}};
 
 const supa = {
   async query(path, method='GET', body=null) {
-    const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
-      method,
-      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': method==='POST'?'return=representation':'' },
-      body: body ? JSON.stringify(body) : null
-    });
-    if (!res.ok) { const e = await res.text(); throw new Error(e); }
-    const text = await res.text();
-    return text ? JSON.parse(text) : {};
+    const res=await fetch(SUPA_URL+'/rest/v1/'+path,{method,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''},body:body?JSON.stringify(body):null});
+    if(!res.ok){const e=await res.text();throw new Error(e);}
+    const t=await res.text(); return t?JSON.parse(t):{};
   }
 };
 
-const frcFetch = async (path) => {
-  const res = await fetch(PROXY + '?path=' + encodeURIComponent(path), { headers: { 'Authorization': 'Bearer ' + SUPA_KEY } });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
-};
-
-const setScreen = (n) => document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('visible', i===n));
-const showErr = (id, msg) => { const el=document.getElementById(id); el.textContent=msg; el.style.display=msg?'block':'none'; };
+const frcFetch = async path=>{const res=await fetch(PROXY+'?path='+encodeURIComponent(path),{headers:{'Authorization':'Bearer '+SUPA_KEY}});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();};
+const setScreen = n=>document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('visible',i===n));
+const showErr = (id,msg)=>{const el=document.getElementById(id);el.textContent=msg;el.style.display=msg?'block':'none';};
 
 function switchTab(tab) {
-  document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
-  document.getElementById('form-reg').style.display = tab==='reg' ? 'block' : 'none';
-  document.getElementById('tab-login').className = 'tab' + (tab==='login'?' active':'');
-  document.getElementById('tab-reg').className = 'tab' + (tab==='reg'?' active':'');
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-reg').style.display=tab==='reg'?'block':'none';
+  document.getElementById('tab-login').className='tab'+(tab==='login'?' active':'');
+  document.getElementById('tab-reg').className='tab'+(tab==='reg'?' active':'');
 }
 
 function switchDash(tab) {
-  document.getElementById('dash-results').style.display = tab==='results' ? 'block' : 'none';
-  document.getElementById('dash-users').style.display = tab==='users' ? 'block' : 'none';
-  document.getElementById('dtab-results').className = 'tab' + (tab==='results'?' active':'');
-  document.getElementById('dtab-users').className = 'tab' + (tab==='users'?' active':'');
-  if (tab === 'users') loadUsers();
+  document.getElementById('dash-results').style.display=tab==='results'?'block':'none';
+  document.getElementById('dash-users').style.display=tab==='users'?'block':'none';
+  document.getElementById('dtab-results').className='tab'+(tab==='results'?' active':'');
+  document.getElementById('dtab-users').className='tab'+(tab==='users'?' active':'');
+  if(tab==='users')loadUsers();
 }
 
-async function boot() {
-  const session = loadAdminSession();
-  if (!session) { setScreen(0); return; }
-  setScreen(1); loadEvents();
-}
+async function boot(){const s=loadAdminSession();if(!s){setScreen(0);return;}setScreen(1);loadEvents();}
 
 async function adminRegister() {
-  const fn=document.getElementById('reg-fname').value.trim();
-  const ln=document.getElementById('reg-lname').value.trim();
-  const pw=document.getElementById('reg-pass').value;
-  const pw2=document.getElementById('reg-pass2').value;
-  if (!fn||!ln||!pw) { showErr('err-reg','All fields are required.'); return; }
-  if (pw !== pw2) { showErr('err-reg','Passwords do not match.'); return; }
+  const fn=document.getElementById('reg-fname').value.trim(), ln=document.getElementById('reg-lname').value.trim();
+  const pw=document.getElementById('reg-pass').value, pw2=document.getElementById('reg-pass2').value;
+  if(!fn||!ln||!pw){showErr('err-reg','All fields required.');return;}
+  if(pw!==pw2){showErr('err-reg','Passwords do not match.');return;}
   showErr('err-reg','');
-  const btn=document.getElementById('btn-reg'); btn.disabled=true; btn.textContent='Creating…';
+  const btn=document.getElementById('btn-reg');btn.disabled=true;btn.textContent='Creating…';
   try {
-    const existing = await supa.query('admins?select=id&limit=1');
-    if (existing.length) { showErr('err-reg','An admin account already exists. Please sign in.'); return; }
-    const rows = await supa.query('admins', 'POST', { first_name:fn, last_name:ln, password:pw });
-    saveAdminSession(rows[0].id, fn, ln);
-    setScreen(1); loadEvents();
-  } catch(e) { showErr('err-reg', 'Error: ' + e.message); }
-  finally { btn.disabled=false; btn.textContent='Create admin account'; }
+    const existing=await supa.query('admins?select=id&limit=1');
+    if(existing.length){showErr('err-reg','Admin already exists. Please sign in.');return;}
+    const rows=await supa.query('admins','POST',{first_name:fn,last_name:ln,password:pw});
+    saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();
+  }catch(e){showErr('err-reg','Error: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Create admin account';}
 }
 
 async function adminLogin() {
-  const fn=document.getElementById('login-fname').value.trim();
-  const ln=document.getElementById('login-lname').value.trim();
-  const pw=document.getElementById('login-pass').value;
-  if (!fn||!ln||!pw) { showErr('err-login','All fields are required.'); return; }
+  const fn=document.getElementById('login-fname').value.trim(), ln=document.getElementById('login-lname').value.trim(), pw=document.getElementById('login-pass').value;
+  if(!fn||!ln||!pw){showErr('err-login','All fields required.');return;}
   showErr('err-login','');
-  const btn=document.getElementById('btn-login'); btn.disabled=true; btn.textContent='Signing in…';
+  const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='Signing in…';
   try {
-    const rows = await supa.query('admins?first_name=eq.'+encodeURIComponent(fn)+'&last_name=eq.'+encodeURIComponent(ln)+'&password=eq.'+encodeURIComponent(pw)+'&select=id,first_name,last_name');
-    if (!rows.length) { showErr('err-login','Incorrect name or password.'); return; }
-    saveAdminSession(rows[0].id, fn, ln);
-    setScreen(1); loadEvents();
-  } catch(e) { showErr('err-login', 'Error: ' + e.message); }
-  finally { btn.disabled=false; btn.textContent='Sign in'; }
+    const rows=await supa.query('admins?first_name=eq.'+encodeURIComponent(fn)+'&last_name=eq.'+encodeURIComponent(ln)+'&password=eq.'+encodeURIComponent(pw)+'&select=id,first_name,last_name');
+    if(!rows.length){showErr('err-login','Incorrect name or password.');return;}
+    saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();
+  }catch(e){showErr('err-login','Error: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Sign in';}
 }
 
-function adminSignOut() {
-  clearAdminSession();
-  matchCache={}; adminState={eventCode:null,matchNumber:null,matchDescription:null};
-  document.getElementById('results-panel').innerHTML='';
-  document.getElementById('match-field').style.display='none';
-  setScreen(0);
-}
+function adminSignOut(){clearAdminSession();matchCache={};adminState={eventCode:null,matchNumber:null,matchDescription:null};document.getElementById('results-panel').innerHTML='';document.getElementById('match-field').style.display='none';setScreen(0);}
 
 async function loadEvents() {
-  const statusEl=document.getElementById('event-status');
-  const sel=document.getElementById('event-select');
-  sel.innerHTML='<option value="">— loading… —</option>'; sel.disabled=true;
-  statusEl.className='api-status loading'; statusEl.textContent='Loading events…';
+  const statusEl=document.getElementById('event-status'),sel=document.getElementById('event-select');
+  sel.innerHTML='<option value="">— loading… —</option>';sel.disabled=true;
+  statusEl.className='api-status loading';statusEl.textContent='Loading events…';
   try {
-    const data = await frcFetch(SEASON + '/events?teamNumber=' + TEAM);
-    const events = data.Events || [];
-    statusEl.className='api-status'; statusEl.style.display='none';
+    const data=await frcFetch(SEASON+'/events?teamNumber='+TEAM);const events=data.Events||[];
+    statusEl.className='api-status';statusEl.style.display='none';
     sel.innerHTML='<option value="">— choose event —</option>';
-    events.forEach(e => {
-      const o=document.createElement('option');
-      o.value=e.code; o.textContent=e.code+' — '+e.name;
-      if (e.code===adminState.eventCode) o.selected=true;
-      sel.appendChild(o);
-    });
-    sel.disabled=false;
-    if (adminState.eventCode) loadMatches();
-  } catch(e) {
-    statusEl.className='api-status error'; statusEl.textContent='Failed to load events: '+e.message;
-    sel.disabled=false;
-  }
+    events.forEach(e=>{const o=document.createElement('option');o.value=e.code;o.textContent=e.code+' — '+e.name;if(e.code===adminState.eventCode)o.selected=true;sel.appendChild(o);});
+    sel.disabled=false;if(adminState.eventCode)loadMatches();
+  }catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
 }
 
-function onEventChange() {
-  const sel=document.getElementById('event-select');
-  adminState.eventCode=sel.value; adminState.matchNumber=null; adminState.matchDescription=null;
-  matchCache={}; document.getElementById('results-panel').innerHTML='';
+function onEventChange(){
+  const sel=document.getElementById('event-select');adminState.eventCode=sel.value;adminState.matchNumber=null;
+  matchCache={};document.getElementById('results-panel').innerHTML='';
   document.getElementById('match-field').style.display=adminState.eventCode?'block':'none';
-  if (adminState.eventCode) loadMatches();
+  if(adminState.eventCode)loadMatches();
 }
 
-async function loadMatches() {
-  const statusEl=document.getElementById('match-status');
-  const sel=document.getElementById('match-select');
+async function loadMatches(){
+  const statusEl=document.getElementById('match-status'),sel=document.getElementById('match-select');
   document.getElementById('match-field').style.display='block';
-  sel.innerHTML='<option value="">— loading… —</option>'; sel.disabled=true;
-  statusEl.className='api-status loading'; statusEl.textContent='Loading matches…';
+  sel.innerHTML='<option value="">— loading… —</option>';sel.disabled=true;
+  statusEl.className='api-status loading';statusEl.textContent='Loading matches…';
   try {
-    const data = await frcFetch(SEASON+'/schedule/'+adminState.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM);
-    const matches = data.Schedule || [];
-    statusEl.className='api-status'; statusEl.style.display='none';
-    matchCache={}; matches.forEach(m => { matchCache[m.matchNumber]=m; });
+    const data=await frcFetch(SEASON+'/schedule/'+adminState.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM);
+    const matches=data.Schedule||[];
+    statusEl.className='api-status';statusEl.style.display='none';
+    matchCache={};matches.forEach(m=>{matchCache[m.matchNumber]=m;});
     sel.innerHTML='<option value="">— choose match —</option>';
-    matches.forEach(m => {
-      const o=document.createElement('option');
-      o.value=m.matchNumber; o.textContent=m.description||('Qualification '+m.matchNumber);
-      if (String(m.matchNumber)===String(adminState.matchNumber)) o.selected=true;
-      sel.appendChild(o);
-    });
-    sel.disabled=false;
-    if (adminState.matchNumber) loadResults();
-  } catch(e) {
-    statusEl.className='api-status error'; statusEl.textContent='Failed to load matches: '+e.message; sel.disabled=false;
-  }
+    matches.forEach(m=>{const o=document.createElement('option');o.value=m.matchNumber;o.textContent=m.description||('Qualification '+m.matchNumber);if(String(m.matchNumber)===String(adminState.matchNumber))o.selected=true;sel.appendChild(o);});
+    sel.disabled=false;if(adminState.matchNumber)loadResults();
+  }catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
 }
 
-function onMatchChange() {
-  const sel=document.getElementById('match-select');
-  adminState.matchNumber=sel.value; adminState.matchDescription=sel.options[sel.selectedIndex]?.textContent||'';
-  document.getElementById('results-panel').innerHTML='';
-  if (adminState.matchNumber) loadResults();
+function onMatchChange(){
+  const sel=document.getElementById('match-select');adminState.matchNumber=sel.value;adminState.matchDescription=sel.options[sel.selectedIndex]?.textContent||'';
+  document.getElementById('results-panel').innerHTML='';if(adminState.matchNumber)loadResults();
 }
 
-async function loadResults() {
+async function loadResults(){
   const panel=document.getElementById('results-panel');
   panel.innerHTML='<div class="api-status loading" style="display:block;">Loading match results and predictions…</div>';
   try {
-    const [matchData, predictions] = await Promise.all([
+    const [matchData,predictions]=await Promise.all([
       frcFetch(SEASON+'/matches/'+adminState.eventCode+'?tournamentLevel=Qualification&matchNumber='+adminState.matchNumber),
       supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)')
     ]);
+    const matches=matchData.Matches||[];
+    const match=matches.find(m=>String(m.matchNumber)===String(adminState.matchNumber));
+    let html='';
 
-    const matches = matchData.Matches || [];
-    const match = matches.find(m => String(m.matchNumber)===String(adminState.matchNumber));
-    let html = '';
+    if(match&&match.scoreRedFinal!=null&&match.scoreBlueFinal!=null){
+      const rS=match.scoreRedFinal,bS=match.scoreBlueFinal;
+      const redWins=rS>bS,blueWins=bS>rS,actualDelta=Math.abs(rS-bS);
+      const correctAlliance=redWins?'red':(blueWins?'blue':null);
 
-    if (match && match.scoreRedFinal != null && match.scoreBlueFinal != null) {
-      const rS = match.scoreRedFinal, bS = match.scoreBlueFinal;
-      const redWins = rS > bS, blueWins = bS > rS;
-      const actualDelta = Math.abs(rS - bS);
-      const correctAlliance = redWins ? 'red' : (blueWins ? 'blue' : null);
+      // Auto-calculate points
+      await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,actualDelta,correctAlliance,predictions,false);
 
-      html += `<div class="score-row">
-        <div class="score-card red">
-          <div class="winner-tag">${redWins?'WINNER':''}</div>
-          <div class="score-label">Red Alliance</div>
-          <div class="score-num">${rS}</div>
-        </div>
-        <div class="score-card blue">
-          <div class="winner-tag">${blueWins?'WINNER':''}</div>
-          <div class="score-label">Blue Alliance</div>
-          <div class="score-num">${bS}</div>
-        </div>
+      html+=`<div class="score-row">
+        <div class="score-card red"><div class="winner-tag">${redWins?'WINNER':''}</div><div class="score-label">Red Alliance</div><div class="score-num">${rS}</div></div>
+        <div class="score-card blue"><div class="winner-tag">${blueWins?'WINNER':''}</div><div class="score-label">Blue Alliance</div><div class="score-num">${bS}</div></div>
       </div>
       <div class="score-delta-display">Score delta: <strong>${actualDelta}</strong></div>`;
 
-      // Evaluate predictions
-      let bestUser = null, bestDiff = Infinity;
-      const predRows = predictions.map(p => {
-        const userName = (p.users?.first_name||'') + ' ' + (p.users?.last_name||'');
-        const correctPick = correctAlliance && p.winning_alliance === correctAlliance;
-        const deltaDiff = Math.abs(p.score_delta - actualDelta);
-        if (correctPick && deltaDiff < bestDiff) { bestDiff=deltaDiff; bestUser=userName; }
-        return { userName, correctPick, predicted:p.winning_alliance, scoreDelta:p.score_delta, deltaDiff };
-      });
+      // Points calc button row
+      html+=`<div class="pts-calc-row">
+        <span class="pts-status done" id="pts-status">✓ Points calculated</span>
+        <button class="btn primary sm" onclick="recalcPoints()">Recalculate points</button>
+      </div>`;
 
-      if (bestUser) {
-        html += `<div class="winner-announce">
-          <div class="w-label">CLOSEST CORRECT PREDICTION</div>
-          <div class="w-name">${bestUser}</div>
-          <div class="w-detail">Predicted ${correctAlliance} alliance · delta off by ${bestDiff}</div>
+      // Find closest delta regardless of alliance
+      const predsSorted=[...predictions].sort((a,b)=>Math.abs(a.score_delta-actualDelta)-Math.abs(b.score_delta-actualDelta));
+      const closestDiff=predsSorted.length?Math.abs(predsSorted[0].score_delta-actualDelta):null;
+      const closestUser=predsSorted.length?(predsSorted[0].users?.first_name||'')+' '+(predsSorted[0].users?.last_name||''):null;
+
+      if(closestUser){
+        html+=`<div class="winner-announce">
+          <div class="w-label">CLOSEST PREDICTION</div>
+          <div class="w-name">${closestUser}</div>
+          <div class="w-detail">Delta off by ${closestDiff}</div>
         </div>`;
-      } else if (predictions.length > 0) {
-        html += `<div class="no-data">No one predicted the correct alliance for this match.</div>`;
       }
 
-      if (predRows.length) {
-        predRows.sort((a,b) => { if (a.correctPick&&!b.correctPick) return -1; if (!a.correctPick&&b.correctPick) return 1; return a.deltaDiff-b.deltaDiff; });
-        html += `<div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Alliance</th><th>Delta</th><th>Off by</th><th>Result</th></tr></thead><tbody>`;
-        predRows.forEach(p => {
-          html += `<tr class="${p.correctPick?'correct-row':''}"><td>${p.userName}</td><td><span class="badge badge-${p.predicted}">${p.predicted}</span></td><td>${p.scoreDelta}</td><td class="delta-diff-val">${p.deltaDiff}</td><td><span class="badge ${p.correctPick?'badge-correct':'badge-wrong'}">${p.correctPick?'correct':'wrong'}</span></td></tr>`;
+      if(predictions.length){
+        const rows=[...predictions].map(p=>{
+          const userName=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
+          const correctPick=correctAlliance&&p.winning_alliance===correctAlliance;
+          const deltaDiff=Math.abs(p.score_delta-actualDelta);
+          return{userName,correctPick,predicted:p.winning_alliance,scoreDelta:p.score_delta,deltaDiff};
+        }).sort((a,b)=>a.deltaDiff-b.deltaDiff);
+
+        // Assign points
+        const pointMap=[5,4,3,2,1];
+        rows.forEach((r,i)=>{r.pts=i<5?pointMap[i]:0;});
+
+        html+=`<div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Alliance</th><th>Delta</th><th>Off by</th><th>Pts</th><th>Result</th></tr></thead><tbody>`;
+        rows.forEach(p=>{
+          html+=`<tr class="${p.correctPick?'correct-row':''}"><td>${p.userName}</td><td><span class="badge badge-${p.predicted}">${p.predicted}</span></td><td>${p.scoreDelta}</td><td>${p.deltaDiff}</td><td>${p.pts?`<span class="pts-badge">+${p.pts}</span>`:''}</td><td><span class="badge ${p.correctPick?'badge-correct':'badge-wrong'}">${p.correctPick?'correct':'wrong'}</span></td></tr>`;
         });
-        html += `</tbody></table></div>`;
+        html+=`</tbody></table></div>`;
       } else {
-        html += `<div class="no-data">No predictions submitted for this match yet.</div>`;
+        html+=`<div class="no-data">No predictions submitted for this match yet.</div>`;
       }
 
     } else {
-      html += `<div class="no-data">This match has not been played yet — no scores available.</div>`;
-      if (predictions.length) {
-        html += `<div style="font-size:12px;color:#888;margin-bottom:8px;">${predictions.length} prediction(s) submitted</div>`;
-        html += `<div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Alliance</th><th>Delta</th></tr></thead><tbody>`;
-        predictions.forEach(p => {
-          html += `<tr><td>${(p.users?.first_name||'')+' '+(p.users?.last_name||'')}</td><td><span class="badge badge-${p.winning_alliance}">${p.winning_alliance}</span></td><td>${p.score_delta}</td></tr>`;
-        });
-        html += `</tbody></table></div>`;
+      html+=`<div class="no-data">This match has not been played yet — no scores available.</div>`;
+      if(predictions.length){
+        html+=`<div style="font-size:12px;color:#888;margin-bottom:8px;">${predictions.length} prediction(s) submitted</div>`;
+        html+=`<div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Alliance</th><th>Delta</th></tr></thead><tbody>`;
+        predictions.forEach(p=>{html+=`<tr><td>${(p.users?.first_name||'')+' '+(p.users?.last_name||'')}</td><td><span class="badge badge-${p.winning_alliance}">${p.winning_alliance}</span></td><td>${p.score_delta}</td></tr>`;});
+        html+=`</tbody></table></div>`;
       }
     }
+    panel.innerHTML=html;
+  }catch(e){panel.innerHTML=`<div class="api-status error" style="display:block;">Failed: ${e.message}</div>`;}
+}
 
-    panel.innerHTML = html;
-  } catch(e) {
-    panel.innerHTML = `<div class="api-status error" style="display:block;">Failed to load: ${e.message}</div>`;
+// Calculate and save points for a match
+async function calculatePoints(eventCode,matchNumber,matchDescription,scoreRed,scoreBlue,actualDelta,correctAlliance,predictions,showFeedback){
+  if(!predictions.length)return;
+  try {
+    // Save match result
+    await supa.query('match_results','POST',{event_code:eventCode,match_number:parseInt(matchNumber),match_description:matchDescription||null,score_red:scoreRed,score_blue:scoreBlue,score_delta:actualDelta,winning_alliance:correctAlliance||'tie'});
+  }catch(e){
+    // Already exists — update it
+    try{await supa.query('match_results?event_code=eq.'+eventCode+'&match_number=eq.'+matchNumber,'PATCH',{score_red:scoreRed,score_blue:scoreBlue,score_delta:actualDelta,winning_alliance:correctAlliance||'tie',calculated_at:new Date().toISOString()});}catch{}
+  }
+
+  // Sort all predictions by delta closeness
+  const sorted=[...predictions].sort((a,b)=>Math.abs(a.score_delta-actualDelta)-Math.abs(b.score_delta-actualDelta));
+  const pointMap=[5,4,3,2,1];
+
+  // Upsert leaderboard_points for each user
+  for(let i=0;i<sorted.length;i++){
+    const p=sorted[i];
+    const pts=i<5?pointMap[i]:0;
+    const deltaDiff=Math.abs(p.score_delta-actualDelta);
+    try {
+      await supa.query('leaderboard_points','POST',{user_id:p.user_id,event_code:eventCode,match_number:parseInt(matchNumber),points:pts,rank_in_match:i+1,delta_diff:deltaDiff});
+    }catch(e){
+      // Already exists — update
+      try{await supa.query('leaderboard_points?user_id=eq.'+p.user_id+'&event_code=eq.'+eventCode+'&match_number=eq.'+matchNumber,'PATCH',{points:pts,rank_in_match:i+1,delta_diff:deltaDiff,calculated_at:new Date().toISOString()});}catch{}
+    }
+  }
+
+  if(showFeedback){
+    const statusEl=document.getElementById('pts-status');
+    if(statusEl){statusEl.textContent='✓ Points recalculated';statusEl.className='pts-status done';}
   }
 }
 
-async function loadUsers() {
-  const subEl=document.getElementById('users-sub');
-  const listEl=document.getElementById('users-list');
-  subEl.textContent='Loading users…'; listEl.innerHTML='';
+async function recalcPoints(){
+  const panel=document.getElementById('results-panel');
+  const statusEl=document.getElementById('pts-status');
+  if(statusEl){statusEl.textContent='Recalculating…';statusEl.className='pts-status';}
   try {
-    const users = await supa.query('users?order=created_at.asc&select=id,first_name,last_name,is_verified,created_at');
-    subEl.textContent = users.length + ' user(s) registered';
-    if (!users.length) { listEl.innerHTML='<div style="padding:1rem;font-size:13px;color:#888;">No users yet.</div>'; return; }
-    listEl.innerHTML = users.map(u => `
+    const [matchData,predictions]=await Promise.all([
+      frcFetch(SEASON+'/matches/'+adminState.eventCode+'?tournamentLevel=Qualification&matchNumber='+adminState.matchNumber),
+      supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)')
+    ]);
+    const matches=matchData.Matches||[];
+    const match=matches.find(m=>String(m.matchNumber)===String(adminState.matchNumber));
+    if(!match||match.scoreRedFinal==null){if(statusEl){statusEl.textContent='No scores available yet';statusEl.className='pts-status';}return;}
+    const rS=match.scoreRedFinal,bS=match.scoreBlueFinal,actualDelta=Math.abs(rS-bS);
+    const correctAlliance=rS>bS?'red':(bS>rS?'blue':null);
+    await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,actualDelta,correctAlliance,predictions,true);
+  }catch(e){if(statusEl){statusEl.textContent='Failed: '+e.message;statusEl.className='pts-status';}}
+}
+
+async function loadUsers(){
+  const subEl=document.getElementById('users-sub'),listEl=document.getElementById('users-list');
+  subEl.textContent='Loading users…';listEl.innerHTML='';
+  try {
+    const users=await supa.query('users?order=created_at.asc&select=id,first_name,last_name,email,is_verified,created_at');
+    subEl.textContent=users.length+' user(s) registered';
+    if(!users.length){listEl.innerHTML='<div style="padding:1rem;font-size:13px;color:#888;">No users yet.</div>';return;}
+    listEl.innerHTML=users.map(u=>`
       <div class="user-row" id="urow-${u.id}">
         <div>
           <div class="user-name">${u.first_name} ${u.last_name}</div>
+          <div class="user-email">${u.email||''}</div>
           <div class="user-date">${new Date(u.created_at).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</div>
         </div>
-        ${u.is_verified
-          ? `<button class="verify-btn verified" disabled>Verified</button>`
-          : `<button class="verify-btn approve" onclick="approveUser('${u.id}')">Approve</button>`}
+        ${u.is_verified?`<button class="verify-btn verified" disabled>Verified</button>`:`<button class="verify-btn approve" onclick="approveUser('${u.id}')">Approve</button>`}
       </div>`).join('');
-  } catch(e) { subEl.textContent='Failed to load users: '+e.message; }
+  }catch(e){subEl.textContent='Failed: '+e.message;}
 }
 
-async function approveUser(userId) {
+async function approveUser(userId){
   try {
-    await supa.query('users?id=eq.'+userId, 'PATCH', { is_verified:true });
+    await supa.query('users?id=eq.'+userId,'PATCH',{is_verified:true});
     const row=document.getElementById('urow-'+userId);
-    if (row) row.querySelector('.verify-btn').outerHTML='<button class="verify-btn verified" disabled>Verified</button>';
-  } catch(e) { alert('Failed to approve: '+e.message); }
+    if(row)row.querySelector('.verify-btn').outerHTML='<button class="verify-btn verified" disabled>Verified</button>';
+  }catch(e){alert('Failed: '+e.message);}
 }
 
 boot();
