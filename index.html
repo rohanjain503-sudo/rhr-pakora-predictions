@@ -229,7 +229,11 @@ const supa = {
   },
   async signUp(email, password) {
     const res = await fetch(SUPA_URL+'/auth/v1/signup', { method:'POST', headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'}, body:JSON.stringify({email,password}) });
-    const d=await res.json(); if(!res.ok) throw new Error(d.error_description||d.msg||'Sign up failed'); return d;
+    const d=await res.json(); if(!res.ok) throw new Error(d.error_description||d.msg||'Sign up failed');
+    const user = d.user || (d.data && d.data.user) || null;
+    const access_token = d.access_token || (d.data && d.data.session && d.data.session.access_token) || null;
+    if(!user || !user.id) throw new Error('Email confirmation is ON in Supabase. Go to Supabase → Authentication → Providers → Email → turn OFF Confirm email, then try again.');
+    return { user, access_token };
   },
   async signIn(email, password) {
     const res = await fetch(SUPA_URL+'/auth/v1/token?grant_type=password', { method:'POST', headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'}, body:JSON.stringify({email,password}) });
