@@ -361,23 +361,31 @@ async function loadMatches() {
   try {
     const [data]=await Promise.all([frcFetch(SEASON+'/schedule/'+state.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM),loadSubmittedMatches(state.eventCode)]);
     const matches=data.Schedule||[]; statusEl.className='api-status'; statusEl.style.display='none';
-    document.getElementById('match-sub').textContent=matches.length+' match(es) · '+submittedMatches.size+' predicted · '+(matches.length-submittedMatches.size)+' remaining';
+    const now=new Date();
+    const available=matches.filter(m=>!submittedMatches.has(String(m.matchNumber))&&new Date(m.startTime)>now).length;
+    document.getElementById('match-sub').textContent=matches.length+' match(es) · '+submittedMatches.size+' predicted · '+available+' open';
     matchCache={}; matches.forEach(m=>{matchCache[m.matchNumber]=m;});
     sel.innerHTML='<option value="">— choose match —</option>';
     matches.forEach(m=>{
       const o=document.createElement('option'); o.value=m.matchNumber;
       const already=submittedMatches.has(String(m.matchNumber));
-      o.textContent=(m.description||'Qualification '+m.matchNumber)+(already?' ✓':''); o.disabled=already; if(already)o.style.color='#bbb';
-      if(String(m.matchNumber)===String(state.matchNumber)&&!already)o.selected=true; sel.appendChild(o);
+      const started=m.startTime&&new Date(m.startTime)<=now;
+      const locked=already||started;
+      const suffix=already?' ✓':(started?' 🔒':'');
+      o.textContent=(m.description||'Qualification '+m.matchNumber)+suffix;
+      o.disabled=locked; if(locked)o.style.color='#bbb';
+      if(String(m.matchNumber)===String(state.matchNumber)&&!locked)o.selected=true; sel.appendChild(o);
     });
-    sel.disabled=false; document.getElementById('btn-match').disabled=!state.matchNumber||submittedMatches.has(String(state.matchNumber));
+    sel.disabled=false; document.getElementById('btn-match').disabled=!state.matchNumber||submittedMatches.has(String(state.matchNumber))||(matchCache[state.matchNumber]?.startTime&&new Date(matchCache[state.matchNumber].startTime)<=now);
   } catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.innerHTML='<option value="">— unavailable —</option>';sel.disabled=false;}
 }
 
 function onMatchChange() {
   const sel=document.getElementById('match-select'); state.matchNumber=sel.value;
-  state.matchDescription=(sel.options[sel.selectedIndex]?.textContent||'').replace(' ✓','');
-  document.getElementById('btn-match').disabled=!state.matchNumber||submittedMatches.has(String(state.matchNumber));
+  state.matchDescription=(sel.options[sel.selectedIndex]?.textContent||'').replace(/ [✓🔒]$/,'');
+  const now=new Date();
+  const started=state.matchNumber&&matchCache[state.matchNumber]?.startTime&&new Date(matchCache[state.matchNumber].startTime)<=now;
+  document.getElementById('btn-match').disabled=!state.matchNumber||submittedMatches.has(String(state.matchNumber))||started;
 }
 
 function goToPrediction() {
