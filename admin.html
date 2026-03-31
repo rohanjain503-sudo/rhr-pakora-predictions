@@ -82,6 +82,18 @@
     .delete-btn:hover { background: #fff0f0; }
     .user-actions { display: flex; align-items: center; gap: 6px; }
     .pts-calc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .alliance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+    .alliance-card-admin { background: #fff; border: 1px solid #e5e5e3; border-radius: 10px; padding: 10px 12px; }
+    .alliance-card-admin h4 { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 8px; letter-spacing: 0.03em; }
+    .alliance-team-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; border-bottom: 1px solid #f0f0ee; }
+    .alliance-team-row:last-child { border-bottom: none; }
+    .alliance-team-row .pos { color: #aaa; }
+    .alliance-team-row .team { font-weight: 500; font-family: monospace; }
+    .alliance-team-row .correct { color: #0d6e44; font-weight: 600; }
+    .alliance-team-row .wrong { color: #a32d2d; }
+    .alliance-pts-badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: #fff8e6; color: #8a6000; font-weight: 600; margin-left: 4px; }
+    .user-alliance-row { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 12px; border-bottom: 1px solid #f0f0ee; }
+    .user-alliance-row:last-child { border-bottom: none; }
     .pts-status { font-size: 12px; color: #888; }
     .pts-status.done { color: #1a9e6e; font-weight: 500; }
   </style>
@@ -122,6 +134,7 @@
   <div class="screen" id="s1">
     <div class="tabs">
       <div class="tab active" id="dtab-results" onclick="switchDash('results')">Match results</div>
+      <div class="tab" id="dtab-alliance" onclick="switchDash('alliance')">Alliance</div>
       <div class="tab" id="dtab-users" onclick="switchDash('users')">Users</div>
     </div>
 
@@ -132,6 +145,18 @@
       <div class="api-status" id="match-status"></div>
       <div class="field" id="match-field" style="display:none;"><label class="label">Match</label><select id="match-select" onchange="onMatchChange()"><option value="">— choose match —</option></select></div>
       <div id="results-panel"></div>
+    </div>
+
+    <!-- Alliance tab -->
+    <div id="dash-alliance" style="display:none;">
+      <div class="api-status" id="alliance-event-status"></div>
+      <div class="field">
+        <label class="label">Event</label>
+        <select id="alliance-event-select" onchange="onAllianceEventChange()">
+          <option value="">— choose event —</option>
+        </select>
+      </div>
+      <div id="alliance-admin-panel"></div>
     </div>
 
     <!-- Users tab -->
@@ -175,11 +200,12 @@ function switchTab(tab) {
 }
 
 function switchDash(tab) {
-  document.getElementById('dash-results').style.display=tab==='results'?'block':'none';
-  document.getElementById('dash-users').style.display=tab==='users'?'block':'none';
-  document.getElementById('dtab-results').className='tab'+(tab==='results'?' active':'');
-  document.getElementById('dtab-users').className='tab'+(tab==='users'?' active':'');
+  ['results','alliance','users'].forEach(t=>{
+    document.getElementById('dash-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('dtab-'+t).className='tab'+(t===tab?' active':'');
+  });
   if(tab==='users')loadUsers();
+  if(tab==='alliance')loadAllianceAdminTab();
 }
 
 async function boot(){const s=loadAdminSession();if(!s){setScreen(0);return;}setScreen(1);loadEvents();}
@@ -430,6 +456,212 @@ async function deleteUser(userId, userName){
     if(!remaining) document.getElementById('users-list').innerHTML='<div style="padding:1rem;font-size:13px;color:#888;">No users yet.</div>';
   }catch(e){alert('Failed to delete: '+e.message);}
 }
+
+// ── Alliance admin ────────────────────────────────────────────
+let allianceAdminEventCode = null;
+let allianceAdminEvents = [];
+
+async function loadAllianceAdminTab() {
+  const statusEl=document.getElementById('alliance-event-status');
+  const sel=document.getElementById('alliance-event-select');
+  if(allianceAdminEvents.length) return; // already loaded
+  sel.innerHTML='<option value="">— loading… —</option>'; sel.disabled=true;
+  statusEl.className='api-status loading'; statusEl.textContent='Loading events…';
+  try {
+    const data=await frcFetch(SEASON+'/events?teamNumber='+TEAM);
+    allianceAdminEvents=data.Events||[];
+    statusEl.className='api-status'; statusEl.style.display='none';
+    sel.innerHTML='<option value="">— choose event —</option>';
+    allianceAdminEvents.forEach(e=>{
+      const o=document.createElement('option');
+      o.value=e.code; o.textContent=e.code+' — '+e.name;
+      sel.appendChild(o);
+    });
+    sel.disabled=false;
+  } catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
+}
+
+async function onAllianceEventChange() {
+  const sel=document.getElementById('alliance-event-select');
+  allianceAdminEventCode=sel.value;
+  const panel=document.getElementById('alliance-admin-panel');
+  if(!allianceAdminEventCode){panel.innerHTML='';return;}
+  await loadAllianceResults(allianceAdminEventCode);
+}
+
+async function loadAllianceResults(eventCode) {
+  const panel=document.getElementById('alliance-admin-panel');
+  panel.innerHTML='<div class="api-status loading" style="display:block;">Checking FIRST API for alliance selections…</div>';
+  try {
+    const [apiData, allPredictions] = await Promise.all([
+      frcFetch(SEASON+'/alliances/'+eventCode),
+      supa.query('alliance_predictions?event_code=eq.'+eventCode+'&select=*,users(first_name,last_name)')
+    ]);
+
+    const alliances = apiData.Alliances || [];
+
+    if(!alliances.length){
+      // No alliance data yet — show all user predictions
+      panel.innerHTML = buildPredictionsOnlyView(allPredictions);
+      return;
+    }
+
+    // Alliance data available — auto score
+    await scoreAlliancePredictions(eventCode, alliances, allPredictions);
+    panel.innerHTML = buildAllianceScoredView(alliances, allPredictions);
+
+  } catch(e){
+    panel.innerHTML=`<div class="api-status error" style="display:block;">Failed: ${e.message}</div>`;
+  }
+}
+
+function buildPredictionsOnlyView(allPredictions) {
+  if(!allPredictions.length) return '<div class="no-data">No alliance predictions submitted yet.</div>';
+
+  // Group by user
+  const byUser={};
+  allPredictions.forEach(p=>{
+    const name=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
+    if(!byUser[name])byUser[name]=[];
+    byUser[name].push(p);
+  });
+
+  let html='<div class="no-data" style="margin-bottom:1rem;">Alliance selection not yet available from FIRST API. Showing submitted predictions.</div>';
+  html+='<div class="table-wrap"><div style="padding:0;">';
+  Object.entries(byUser).forEach(([name,preds])=>{
+    html+=`<div class="user-alliance-row"><span style="font-weight:500;">${name}</span><span style="color:#888;">${preds.length}/8 alliances predicted</span></div>`;
+  });
+  html+='</div></div>';
+  return html;
+}
+
+async function scoreAlliancePredictions(eventCode, alliances, allPredictions) {
+  // Save actual alliance results
+  for(const a of alliances){
+    const num=a.number||a.allianceNumber||a.name?.replace(/\D/g,'');
+    const teams=a.picks||a.teams||[];
+    const captain=teams[0]||null;
+    const pick1=teams[1]||null;
+    const pick2=teams[2]||null;
+    try {
+      await supa.query('alliance_results','POST',{event_code:eventCode,alliance_num:parseInt(num),captain,pick1,pick2});
+    } catch(e){
+      try{await supa.query('alliance_results?event_code=eq.'+eventCode+'&alliance_num=eq.'+num,'PATCH',{captain,pick1,pick2,calculated_at:new Date().toISOString()});}catch{}
+    }
+  }
+
+  // Build actual lookup: allianceNum -> {captain, pick1, pick2}
+  const actual={};
+  alliances.forEach(a=>{
+    const num=parseInt(a.number||a.allianceNumber||a.name?.replace(/\D/g,''));
+    const teams=a.picks||a.teams||[];
+    actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};
+  });
+
+  // Score each user
+  const userPoints={};
+  allPredictions.forEach(p=>{
+    const uid=p.user_id;
+    if(!userPoints[uid]) userPoints[uid]=0;
+    const act=actual[p.alliance_num];
+    if(!act) return;
+    let pts=0;
+    if(act.captain&&p.captain===act.captain) pts+=3;
+    if(act.pick1&&p.pick1===act.pick1) pts+=2;
+    if(act.pick2&&p.pick2===act.pick2) pts+=1;
+    // Bonus: all 3 exact
+    if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2) pts+=2;
+    userPoints[uid]+=pts;
+  });
+
+  // Upsert alliance_points
+  for(const [uid,pts] of Object.entries(userPoints)){
+    try {
+      await supa.query('alliance_points','POST',{user_id:uid,event_code:eventCode,points:pts});
+    } catch(e){
+      try{await supa.query('alliance_points?user_id=eq.'+uid+'&event_code=eq.'+eventCode,'PATCH',{points:pts,calculated_at:new Date().toISOString()});}catch{}
+    }
+  }
+}
+
+function buildAllianceScoredView(alliances, allPredictions) {
+  // Build actual lookup
+  const actual={};
+  alliances.forEach(a=>{
+    const num=parseInt(a.number||a.allianceNumber||a.name?.replace(/\D/g,''));
+    const teams=a.picks||a.teams||[];
+    actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};
+  });
+
+  // Build user scores
+  const userScores={};
+  allPredictions.forEach(p=>{
+    const uid=p.user_id;
+    const name=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
+    if(!userScores[uid]) userScores[uid]={name,total:0,details:[]};
+    const act=actual[p.alliance_num];
+    if(!act){userScores[uid].details.push({num:p.alliance_num,pts:0});return;}
+    let pts=0;
+    if(act.captain&&p.captain===act.captain) pts+=3;
+    if(act.pick1&&p.pick1===act.pick1) pts+=2;
+    if(act.pick2&&p.pick2===act.pick2) pts+=1;
+    if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2) pts+=2;
+    userScores[uid].total+=pts; userScores[uid].details.push({num:p.alliance_num,pts});
+  });
+
+  let html='<div style="font-size:12px;font-weight:500;color:#1a9e6e;margin-bottom:0.75rem;">✓ Alliance selection complete — scores calculated automatically</div>';
+
+  // Actual alliances grid
+  html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;">Actual alliances</div>';
+  html+='<div class="alliance-grid">';
+  for(let i=1;i<=8;i++){
+    const a=actual[i]||{captain:'—',pick1:'—',pick2:'—'};
+    html+=`<div class="alliance-card-admin"><h4>ALLIANCE ${i}</h4>
+      <div class="alliance-team-row"><span class="pos">Captain</span><span class="team">${a.captain||'—'}</span></div>
+      <div class="alliance-team-row"><span class="pos">Pick 1</span><span class="team">${a.pick1||'—'}</span></div>
+      <div class="alliance-team-row"><span class="pos">Pick 2</span><span class="team">${a.pick2||'—'}</span></div>
+    </div>`;
+  }
+  html+='</div>';
+
+  // User scores table
+  const sorted=Object.values(userScores).sort((a,b)=>b.total-a.total);
+  if(sorted.length){
+    html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;">User scores</div>';
+    html+='<div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Pts</th></tr></thead><tbody>';
+    sorted.forEach(u=>{
+      html+=`<tr><td>${u.name}</td><td><span class="alliance-pts-badge">+${u.total}</span></td></tr>`;
+    });
+    html+='</tbody></table></div>';
+  } else {
+    html+='<div class="no-data">No alliance predictions submitted.</div>';
+  }
+
+  // Detailed breakdown per user
+  html+='<div style="font-size:13px;font-weight:500;margin:0.75rem 0 8px;">Detailed breakdown</div>';
+  sorted.forEach(u=>{
+    html+=`<div style="font-size:12px;font-weight:500;color:#888;margin-bottom:4px;">${u.name} — ${u.total} pts total</div>`;
+    html+='<div class="table-wrap" style="margin-bottom:0.75rem;"><table class="pred-table"><thead><tr><th>Alliance</th><th>Captain</th><th>Pick 1</th><th>Pick 2</th><th>Pts</th></tr></thead><tbody>';
+    u.details.sort((a,b)=>a.num-b.num).forEach(d=>{
+      const pred=allPredictions.find(p=>p.user_id===Object.keys(Object.fromEntries(Object.entries(userScores).filter(([,v])=>v.name===u.name)))[0]&&p.alliance_num===d.num);
+      const act=actual[d.num]||{};
+      const capClass=pred&&act.captain&&pred.captain===act.captain?'correct':'wrong';
+      const p1Class=pred&&act.pick1&&pred.pick1===act.pick1?'correct':'wrong';
+      const p2Class=pred&&act.pick2&&pred.pick2===act.pick2?'correct':'wrong';
+      html+=`<tr>
+        <td>${d.num}</td>
+        <td class="${capClass}">${pred?.captain||'—'}</td>
+        <td class="${p1Class}">${pred?.pick1||'—'}</td>
+        <td class="${p2Class}">${pred?.pick2||'—'}</td>
+        <td>${d.pts?`<span class="alliance-pts-badge">+${d.pts}</span>`:'0'}</td>
+      </tr>`;
+    });
+    html+='</tbody></table></div>';
+  });
+
+  return html;
+}
+
 
 boot();
 </script>

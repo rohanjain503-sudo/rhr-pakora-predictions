@@ -90,6 +90,16 @@
     .coming-soon { text-align: center; padding: 3rem 1rem; color: #aaa; }
     .coming-soon .cs-icon { font-size: 36px; margin-bottom: 0.75rem; }
     .success-icon { text-align: center; font-size: 40px; margin-bottom: 1rem; }
+    /* Alliance prediction slots */
+    .alliance-slot { background: var(--color-background-primary,#fff); border: 1px solid #e5e5e3; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .alliance-slot-header { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 8px; letter-spacing: 0.03em; }
+    .alliance-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .alliance-input-wrap label { font-size: 11px; color: #aaa; display: block; margin-bottom: 3px; }
+    .alliance-input-wrap input { padding: 8px 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a; font-family: inherit; width: 100%; outline: none; transition: border-color 0.15s; }
+    .alliance-input-wrap input:focus { border-color: #1a6bb5; }
+    .alliance-input-wrap input.locked { background: #f5f5f3; color: #aaa; cursor: not-allowed; }
+    .alliance-slot.saved { border-color: #1a9e6e; }
+
   </style>
 </head>
 <body>
@@ -199,9 +209,22 @@
       </div>
     </div>
 
-    <!-- Alliance tab (placeholder) -->
+    <!-- Alliance tab -->
     <div id="tab-alliance" style="display:none;">
-      <div class="coming-soon"><div class="cs-icon">🏆</div><p>Alliance predictions coming soon.</p></div>
+      <div class="api-status" id="alliance-status"></div>
+      <div class="section-sub" id="alliance-sub"></div>
+      <div id="alliance-locked-banner" style="display:none;background:#fff0f0;border:1px solid #e24b4a;border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:#a32d2d;">
+        Qualification matches have started — alliance predictions are now locked.
+      </div>
+      <div id="alliance-event-prompt" style="display:none;">
+        <div class="section-sub">Go to the Match tab first and select an event — your alliance predictions will be for that event.</div>
+      </div>
+      <div id="alliance-form" style="display:none;">
+        <div id="alliance-slots"></div>
+        <button class="btn success" id="btn-save-alliances" onclick="saveAlliancePredictions()" style="margin-top:0.5rem;">Save all predictions</button>
+        <div class="err-text" id="err-alliance"></div>
+        <div style="font-size:11px;color:#bbb;text-align:center;margin-top:0.75rem;">Captain=3pts · Pick 1=2pts · Pick 2=1pt · All exact=+2 bonus · Max 8pts per alliance</div>
+      </div>
     </div>
 
     <!-- Leaderboard tab -->
@@ -220,6 +243,8 @@ const PROXY = SUPA_URL + '/functions/v1/frc-proxy';
 const TEAM = 1241, SEASON = 2026;
 const state = { userId:null, user:null, eventCode:null, eventName:null, matchNumber:null, matchDescription:null, alliance:null, scoreDelta:null };
 let matchCache={}, submittedMatches=new Set();
+let alliancePredictions={}; // allianceNum -> {captain, pick1, pick2}
+let qualsLocked=false; // true when last qual match has started
 
 const supa = {
   async query(path, method='GET', body=null) {
@@ -268,6 +293,7 @@ function switchAuthTab(tab) {
 function switchMainTab(tab) {
   ['pred','alliance','lb'].forEach(t=>{ document.getElementById('tab-'+t).style.display=t===tab?'block':'none'; document.getElementById('mtab-'+t).className='main-tab'+(t===tab?' active':''); });
   if(tab==='lb') loadLeaderboard();
+  if(tab==='alliance') initAllianceTab();
 }
 
 async function boot() {
@@ -477,6 +503,117 @@ async function loadLeaderboard() {
       `</tbody></table>`;
   } catch(e){card.innerHTML=`<div class="lb-empty">Failed: ${e.message}</div>`;}
 }
+
+// ── Alliance predictions ──────────────────────────────────────
+async function initAllianceTab() {
+  const statusEl=document.getElementById('alliance-status');
+  const subEl=document.getElementById('alliance-sub');
+  const formEl=document.getElementById('alliance-form');
+  const promptEl=document.getElementById('alliance-event-prompt');
+  const lockedBanner=document.getElementById('alliance-locked-banner');
+
+  if(!state.eventCode){
+    promptEl.style.display='block'; formEl.style.display='none';
+    statusEl.style.display='none'; return;
+  }
+  promptEl.style.display='none';
+  statusEl.className='api-status loading'; statusEl.textContent='Loading qualification schedule…';
+
+  try {
+    // Load schedule to check if quals have started
+    const schedData=await frcFetch(SEASON+'/schedule/'+state.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM);
+    const matches=schedData.Schedule||[];
+    const now=new Date();
+    // Locked if ANY match has started
+    qualsLocked=matches.some(m=>m.startTime&&new Date(m.startTime)<=now);
+
+    statusEl.className='api-status'; statusEl.style.display='none';
+
+    if(qualsLocked){
+      lockedBanner.style.display='block';
+    } else {
+      lockedBanner.style.display='none';
+    }
+
+    // Load existing predictions
+    const existing=await supa.query('alliance_predictions?user_id=eq.'+state.userId+'&event_code=eq.'+state.eventCode+'&select=alliance_num,captain,pick1,pick2');
+    alliancePredictions={};
+    existing.forEach(p=>{alliancePredictions[p.alliance_num]={captain:p.captain,pick1:p.pick1,pick2:p.pick2};});
+
+    subEl.textContent=existing.length+' of 8 alliances predicted for '+state.eventCode;
+    buildAllianceSlots(qualsLocked);
+    formEl.style.display='block';
+    document.getElementById('btn-save-alliances').style.display=qualsLocked?'none':'block';
+  } catch(e){
+    statusEl.className='api-status error'; statusEl.textContent='Failed to load: '+e.message;
+  }
+}
+
+function buildAllianceSlots(locked) {
+  const container=document.getElementById('alliance-slots');
+  container.innerHTML='';
+  for(let i=1;i<=8;i++){
+    const pred=alliancePredictions[i]||{captain:'',pick1:'',pick2:''};
+    const hasPred=pred.captain||pred.pick1||pred.pick2;
+    const div=document.createElement('div');
+    div.className='alliance-slot'+(hasPred?' saved':'');
+    div.id='slot-'+i;
+    div.innerHTML=`
+      <div class="alliance-slot-header">ALLIANCE ${i}</div>
+      <div class="alliance-inputs">
+        <div class="alliance-input-wrap">
+          <label>Captain (3pts)</label>
+          <input type="number" id="a${i}-captain" value="${pred.captain||''}" placeholder="Team #" ${locked?'class="locked" readonly':''} oninput="onAllianceInput(${i})" />
+        </div>
+        <div class="alliance-input-wrap">
+          <label>Pick 1 (2pts)</label>
+          <input type="number" id="a${i}-pick1" value="${pred.pick1||''}" placeholder="Team #" ${locked?'class="locked" readonly':''} oninput="onAllianceInput(${i})" />
+        </div>
+        <div class="alliance-input-wrap">
+          <label>Pick 2 (1pt)</label>
+          <input type="number" id="a${i}-pick2" value="${pred.pick2||''}" placeholder="Team #" ${locked?'class="locked" readonly':''} oninput="onAllianceInput(${i})" />
+        </div>
+      </div>`;
+    container.appendChild(div);
+  }
+}
+
+function onAllianceInput(allianceNum) {
+  const slot=document.getElementById('slot-'+allianceNum);
+  const c=document.getElementById('a'+allianceNum+'-captain').value;
+  const p1=document.getElementById('a'+allianceNum+'-pick1').value;
+  const p2=document.getElementById('a'+allianceNum+'-pick2').value;
+  if(c||p1||p2) slot.className='alliance-slot saved';
+  else slot.className='alliance-slot';
+}
+
+async function saveAlliancePredictions() {
+  if(qualsLocked){showErr('err-alliance','Predictions are locked — quals have started.');return;}
+  const btn=document.getElementById('btn-save-alliances');
+  btn.disabled=true; btn.textContent='Saving…'; showErr('err-alliance','');
+  let saved=0, errors=[];
+  for(let i=1;i<=8;i++){
+    const captain=parseInt(document.getElementById('a'+i+'-captain').value)||null;
+    const pick1=parseInt(document.getElementById('a'+i+'-pick1').value)||null;
+    const pick2=parseInt(document.getElementById('a'+i+'-pick2').value)||null;
+    if(!captain&&!pick1&&!pick2) continue;
+    try {
+      await supa.query('alliance_predictions','POST',{user_id:state.userId,event_code:state.eventCode,alliance_num:i,captain,pick1,pick2});
+      alliancePredictions[i]={captain,pick1,pick2}; saved++;
+    } catch(e){
+      // Already exists — update
+      try {
+        await supa.query('alliance_predictions?user_id=eq.'+state.userId+'&event_code=eq.'+state.eventCode+'&alliance_num=eq.'+i,'PATCH',{captain,pick1,pick2,updated_at:new Date().toISOString()});
+        alliancePredictions[i]={captain,pick1,pick2}; saved++;
+      } catch(e2){ errors.push('Alliance '+i+': '+e2.message); }
+    }
+  }
+  document.getElementById('alliance-sub').textContent=saved+' of 8 alliances predicted for '+state.eventCode;
+  if(errors.length) showErr('err-alliance','Some failed: '+errors.join(', '));
+  else { btn.textContent='Saved!'; setTimeout(()=>{btn.textContent='Save all predictions';},2000); }
+  btn.disabled=false;
+}
+
 
 boot();
 </script>
