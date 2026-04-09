@@ -9,11 +9,10 @@
     html, body { height: 100%; background: #f5f5f3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; }
     .app { max-width: 480px; margin: 0 auto; padding: 1rem; min-height: 100vh; }
     .header { text-align: center; padding: 2rem 0 1.25rem; border-bottom: 1px solid #e5e5e3; margin-bottom: 1.5rem; }
-    .header h1 { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+    .header h1 { font-size: 18px; font-weight: 600; }
     .header p { font-size: 12px; color: #888; margin-top: 4px; }
     .screen { display: none; }
     .screen.visible { display: block; }
-    .section-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
     .section-sub { font-size: 13px; color: #888; margin-bottom: 1.25rem; }
     .field { margin-bottom: 1rem; }
     .label { font-size: 12px; color: #666; font-weight: 500; margin-bottom: 5px; letter-spacing: 0.02em; display: block; }
@@ -25,18 +24,16 @@
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn.primary { background: #1a6bb5; border-color: #1a6bb5; color: #fff; }
     .btn.primary:hover:not(:disabled) { background: #155a9a; }
-    .btn.success { background: #1a9e6e; border-color: #1a9e6e; color: #fff; }
-    .btn.success:hover:not(:disabled) { background: #157a55; }
     .btn.danger { border-color: #e24b4a; color: #a32d2d; }
     .btn.danger:hover { background: #fff5f5; }
-    .btn.sm { padding: 8px 16px; font-size: 13px; width: auto; margin-top: 0; }
+    .btn.warn { background: #fff8e6; border-color: #f0c060; color: #7a5500; }
+    .btn.sm { padding: 6px 12px; font-size: 12px; width: auto; margin-top: 0; }
     .err-text { font-size: 13px; color: #a32d2d; margin-top: 6px; display: none; }
     .api-status { font-size: 12px; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; display: none; }
     .api-status.loading { display: block; background: #eef4fd; color: #1a6bb5; }
     .api-status.error { display: block; background: #fff0f0; color: #a32d2d; }
-    .api-status.success { display: block; background: #f0faf5; color: #0d6e44; }
-    .tabs { display: flex; border-bottom: 1px solid #e5e5e3; margin-bottom: 1.25rem; }
-    .tab { padding: 9px 18px; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tabs { display: flex; border-bottom: 1px solid #e5e5e3; margin-bottom: 1.25rem; overflow-x: auto; }
+    .tab { padding: 9px 14px; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
     .tab.active { color: #1a6bb5; border-bottom-color: #1a6bb5; }
     .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
     .score-card { border-radius: 12px; padding: 16px 12px; text-align: center; border: 2px solid #eee; }
@@ -58,7 +55,7 @@
     .no-data { background: #fafaf8; border: 1px solid #e5e5e3; border-radius: 10px; padding: 1rem; font-size: 13px; color: #888; text-align: center; margin-bottom: 1rem; }
     .table-wrap { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow: hidden; margin-bottom: 1rem; }
     .pred-table { width: 100%; font-size: 13px; border-collapse: collapse; }
-    .pred-table th { font-size: 11px; font-weight: 600; color: #888; text-align: left; padding: 9px 12px; background: #fafaf8; border-bottom: 1px solid #e5e5e3; letter-spacing: 0.03em; }
+    .pred-table th { font-size: 11px; font-weight: 600; color: #888; text-align: left; padding: 9px 12px; background: #fafaf8; border-bottom: 1px solid #e5e5e3; }
     .pred-table td { padding: 9px 12px; border-bottom: 1px solid #f0f0ee; vertical-align: middle; }
     .pred-table tr:last-child td { border-bottom: none; }
     .pred-table tr.correct-row td { background: #f5fdf8; }
@@ -68,34 +65,40 @@
     .badge-correct { background: #e8f9f0; color: #0d6e44; }
     .badge-wrong { background: #fff0f0; color: #a32d2d; }
     .pts-badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #fff8e6; color: #8a6000; }
+    .pts-calc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .pts-status { font-size: 12px; color: #888; }
+    .pts-status.done { color: #1a9e6e; font-weight: 500; }
     .user-card { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow: hidden; }
     .user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #f0f0ee; }
     .user-row:last-child { border-bottom: none; }
     .user-name { font-size: 14px; font-weight: 500; }
     .user-email { font-size: 11px; color: #aaa; margin-top: 2px; }
     .user-date { font-size: 11px; color: #aaa; }
+    .user-actions { display: flex; align-items: center; gap: 6px; }
     .verify-btn { padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; font-family: inherit; border: 1px solid; transition: background 0.15s; }
     .verify-btn.approve { border-color: #1a9e6e; color: #0d6e44; background: #fff; }
     .verify-btn.approve:hover { background: #f0faf5; }
     .verify-btn.verified { border-color: #ddd; color: #aaa; background: #fafaf8; cursor: default; }
-    .delete-btn { padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; font-family: inherit; border: 1px solid #e24b4a; color: #a32d2d; background: #fff; transition: background 0.15s; margin-left: 6px; }
+    .delete-btn { padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; font-family: inherit; border: 1px solid #e24b4a; color: #a32d2d; background: #fff; transition: background 0.15s; }
     .delete-btn:hover { background: #fff0f0; }
-    .user-actions { display: flex; align-items: center; gap: 6px; }
-    .pts-calc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
     .alliance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
     .alliance-card-admin { background: #fff; border: 1px solid #e5e5e3; border-radius: 10px; padding: 10px 12px; }
-    .alliance-card-admin h4 { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 8px; letter-spacing: 0.03em; }
+    .alliance-card-admin h4 { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 8px; }
     .alliance-team-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; border-bottom: 1px solid #f0f0ee; }
     .alliance-team-row:last-child { border-bottom: none; }
     .alliance-team-row .pos { color: #aaa; }
     .alliance-team-row .team { font-weight: 500; font-family: monospace; }
-    .alliance-team-row .correct { color: #0d6e44; font-weight: 600; }
-    .alliance-team-row .wrong { color: #a32d2d; }
-    .alliance-pts-badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: #fff8e6; color: #8a6000; font-weight: 600; margin-left: 4px; }
+    .alliance-pts-badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: #fff8e6; color: #8a6000; font-weight: 600; }
     .user-alliance-row { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 12px; border-bottom: 1px solid #f0f0ee; }
     .user-alliance-row:last-child { border-bottom: none; }
-    .pts-status { font-size: 12px; color: #888; }
-    .pts-status.done { color: #1a9e6e; font-weight: 500; }
+    .override-badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 6px; font-weight: 600; }
+    .override-badge.test { background: #eef4fd; color: #185fa5; }
+    .override-badge.rematch { background: #fff0ea; color: #993c1d; }
+    .ov-action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 1.5rem; width: 320px; max-width: 90vw; }
+    .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 0.25rem; }
+    .modal-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
@@ -136,9 +139,9 @@
       <div class="tab active" id="dtab-results" onclick="switchDash('results')">Match results</div>
       <div class="tab" id="dtab-alliance" onclick="switchDash('alliance')">Alliance</div>
       <div class="tab" id="dtab-users" onclick="switchDash('users')">Users</div>
+      <div class="tab" id="dtab-overrides" onclick="switchDash('overrides')">Overrides</div>
     </div>
 
-    <!-- Results tab -->
     <div id="dash-results">
       <div class="api-status" id="event-status"></div>
       <div class="field"><label class="label">Event</label><select id="event-select" onchange="onEventChange()"><option value="">— choose event —</option></select></div>
@@ -147,200 +150,231 @@
       <div id="results-panel"></div>
     </div>
 
-    <!-- Alliance tab -->
     <div id="dash-alliance" style="display:none;">
       <div class="api-status" id="alliance-event-status"></div>
-      <div class="field">
-        <label class="label">Event</label>
-        <select id="alliance-event-select" onchange="onAllianceEventChange()">
-          <option value="">— choose event —</option>
-        </select>
-      </div>
+      <div class="field"><label class="label">Event</label><select id="alliance-event-select" onchange="onAllianceEventChange()"><option value="">— choose event —</option></select></div>
       <div id="alliance-admin-panel"></div>
     </div>
 
-    <!-- Users tab -->
     <div id="dash-users" style="display:none;">
       <div class="section-sub" id="users-sub">Loading users…</div>
       <div class="user-card" id="users-list"></div>
+    </div>
+
+    <div id="dash-overrides" style="display:none;">
+      <div class="api-status" id="ov-event-status"></div>
+      <div class="field"><label class="label">Event</label><select id="ov-event-select" onchange="onOverrideEventChange()"><option value="">— choose event —</option></select></div>
+      <div id="ov-match-wrap" style="display:none;">
+        <div class="api-status" id="ov-match-status"></div>
+        <div class="field"><label class="label">Match</label><select id="ov-match-select"><option value="">— choose match —</option></select></div>
+        <div class="ov-action-row">
+          <button class="btn primary sm" style="width:100%;padding:11px;" onclick="activateOverride('test')">🧪 Test mode</button>
+          <button class="btn warn sm" style="width:100%;padding:11px;" onclick="activateOverride('rematch')">🔁 Rematch</button>
+        </div>
+        <div id="ov-match-status-display"></div>
+      </div>
+      <div id="ov-alliance-wrap" style="display:none;margin-top:1rem;border-top:1px solid #e5e5e3;padding-top:1rem;">
+        <div style="font-size:13px;font-weight:500;margin-bottom:0.5rem;">Alliance predictions</div>
+        <div id="ov-alliance-status-display"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+          <button class="btn primary sm" style="width:100%;padding:11px;" onclick="activateAllianceOverride()">🧪 Test mode</button>
+          <button class="btn sm" style="width:100%;padding:11px;border-color:#e24b4a;color:#a32d2d;" onclick="endAllianceOverride()">End test</button>
+        </div>
+      </div>
     </div>
 
     <button class="btn danger" style="margin-top:2rem;" onclick="adminSignOut()">Sign out</button>
   </div>
 </div>
 
+<!-- Rematch score modal -->
+<div class="modal-overlay" id="rematch-modal">
+  <div class="modal-box">
+    <div class="modal-title">📝 Enter final rematch score</div>
+    <div id="rematch-match-label" style="font-size:12px;color:#888;margin-bottom:1rem;"></div>
+    <div class="field"><label class="label">Red final score</label><input type="number" id="rm-red" placeholder="e.g. 72" min="0" /></div>
+    <div class="field"><label class="label">Blue final score</label><input type="number" id="rm-blue" placeholder="e.g. 58" min="0" /></div>
+    <div class="field">
+      <label class="label">Winner</label>
+      <select id="rm-winner">
+        <option value="">— select —</option>
+        <option value="red">Red Alliance</option>
+        <option value="blue">Blue Alliance</option>
+        <option value="tie">Tie</option>
+      </select>
+    </div>
+    <div class="err-text" id="err-rematch" style="margin-bottom:8px;"></div>
+    <div class="modal-btn-row">
+      <button class="btn" onclick="closeRematchModal()">Cancel</button>
+      <button class="btn primary" id="btn-save-score" onclick="saveRematchScore()">Save score</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const SUPA_URL = 'https://oxrkddktjxbmyeqjitnv.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94cmtkZGt0anhibXllcWppdG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjEwNjksImV4cCI6MjA4OTU5NzA2OX0.QVhBhrBvZHI9mSytjqnZ4pyA3qzGL6JuNqEGS1SOKZk';
-const PROXY = SUPA_URL + '/functions/v1/frc-proxy';
-const TEAM = 1241, SEASON = 2026, ADMIN_KEY = 'rhrpakora_admin';
-let matchCache={}, adminState={eventCode:null,matchNumber:null,matchDescription:null};
+const SUPA_URL='https://oxrkddktjxbmyeqjitnv.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94cmtkZGt0anhibXllcWppdG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjEwNjksImV4cCI6MjA4OTU5NzA2OX0.QVhBhrBvZHI9mSytjqnZ4pyA3qzGL6JuNqEGS1SOKZk';
+const PROXY=SUPA_URL+'/functions/v1/frc-proxy';
+const TEAM=1241,SEASON=2026,ADMIN_KEY='rhrpakora_admin';
+let matchCache={},adminState={eventCode:null,matchNumber:null,matchDescription:null};
+let ovEventCode=null,ovEvents=[],ovMatchCache={},pendingRematchMatchNum=null;
+let allianceAdminEventCode=null,allianceAdminEvents=[];
 
-const saveAdminSession = (id,fn,ln)=>{try{localStorage.setItem(ADMIN_KEY,JSON.stringify({id,fn,ln}));}catch{}};
-const loadAdminSession = ()=>{try{return JSON.parse(localStorage.getItem(ADMIN_KEY));}catch{return null;}};
-const clearAdminSession = ()=>{try{localStorage.removeItem(ADMIN_KEY);}catch{}};
+const saveAdminSession=(id,fn,ln)=>{try{localStorage.setItem(ADMIN_KEY,JSON.stringify({id,fn,ln}));}catch{}};
+const loadAdminSession=()=>{try{return JSON.parse(localStorage.getItem(ADMIN_KEY));}catch{return null;}};
+const clearAdminSession=()=>{try{localStorage.removeItem(ADMIN_KEY);}catch{}};
+const supa={async query(path,method='GET',body=null){
+  const res=await fetch(SUPA_URL+'/rest/v1/'+path,{method,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''},body:body?JSON.stringify(body):null});
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  const t=await res.text();return t?JSON.parse(t):{};
+}};
+const frcFetch=async path=>{const res=await fetch(PROXY+'?path='+encodeURIComponent(path),{headers:{'Authorization':'Bearer '+SUPA_KEY}});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();};
+const setScreen=n=>document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('visible',i===n));
+const showErr=(id,msg)=>{const el=document.getElementById(id);el.textContent=msg;el.style.display=msg?'block':'none';};
 
-const supa = {
-  async query(path, method='GET', body=null) {
-    const res=await fetch(SUPA_URL+'/rest/v1/'+path,{method,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''},body:body?JSON.stringify(body):null});
-    if(!res.ok){const e=await res.text();throw new Error(e);}
-    const t=await res.text(); return t?JSON.parse(t):{};
-  }
-};
-
-const frcFetch = async path=>{const res=await fetch(PROXY+'?path='+encodeURIComponent(path),{headers:{'Authorization':'Bearer '+SUPA_KEY}});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();};
-const setScreen = n=>document.querySelectorAll('.screen').forEach((s,i)=>s.classList.toggle('visible',i===n));
-const showErr = (id,msg)=>{const el=document.getElementById(id);el.textContent=msg;el.style.display=msg?'block':'none';};
-
-function switchTab(tab) {
+function switchTab(tab){
   document.getElementById('form-login').style.display=tab==='login'?'block':'none';
   document.getElementById('form-reg').style.display=tab==='reg'?'block':'none';
   document.getElementById('tab-login').className='tab'+(tab==='login'?' active':'');
   document.getElementById('tab-reg').className='tab'+(tab==='reg'?' active':'');
 }
-
-function switchDash(tab) {
-  ['results','alliance','users'].forEach(t=>{
+function switchDash(tab){
+  ['results','alliance','users','overrides'].forEach(t=>{
     document.getElementById('dash-'+t).style.display=t===tab?'block':'none';
     document.getElementById('dtab-'+t).className='tab'+(t===tab?' active':'');
   });
   if(tab==='users')loadUsers();
   if(tab==='alliance')loadAllianceAdminTab();
+  if(tab==='overrides')loadOverridesTab();
 }
-
 async function boot(){const s=loadAdminSession();if(!s){setScreen(0);return;}setScreen(1);loadEvents();}
 
-async function adminRegister() {
-  const fn=document.getElementById('reg-fname').value.trim(), ln=document.getElementById('reg-lname').value.trim();
-  const pw=document.getElementById('reg-pass').value, pw2=document.getElementById('reg-pass2').value;
+// ── Auth ──────────────────────────────────────────────────────
+async function adminRegister(){
+  const fn=document.getElementById('reg-fname').value.trim(),ln=document.getElementById('reg-lname').value.trim();
+  const pw=document.getElementById('reg-pass').value,pw2=document.getElementById('reg-pass2').value;
   if(!fn||!ln||!pw){showErr('err-reg','All fields required.');return;}
   if(pw!==pw2){showErr('err-reg','Passwords do not match.');return;}
-  showErr('err-reg','');
   const btn=document.getElementById('btn-reg');btn.disabled=true;btn.textContent='Creating…';
-  try {
+  try{
     const existing=await supa.query('admins?select=id&limit=1');
-    if(existing.length){showErr('err-reg','Admin already exists. Please sign in.');return;}
+    if(existing.length){showErr('err-reg','Admin already exists.');return;}
     const rows=await supa.query('admins','POST',{first_name:fn,last_name:ln,password:pw});
     saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();
   }catch(e){showErr('err-reg','Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Create admin account';}
 }
-
-async function adminLogin() {
-  const fn=document.getElementById('login-fname').value.trim(), ln=document.getElementById('login-lname').value.trim(), pw=document.getElementById('login-pass').value;
+async function adminLogin(){
+  const fn=document.getElementById('login-fname').value.trim(),ln=document.getElementById('login-lname').value.trim(),pw=document.getElementById('login-pass').value;
   if(!fn||!ln||!pw){showErr('err-login','All fields required.');return;}
-  showErr('err-login','');
   const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='Signing in…';
-  try {
+  try{
     const rows=await supa.query('admins?first_name=eq.'+encodeURIComponent(fn)+'&last_name=eq.'+encodeURIComponent(ln)+'&password=eq.'+encodeURIComponent(pw)+'&select=id,first_name,last_name');
     if(!rows.length){showErr('err-login','Incorrect name or password.');return;}
     saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();
   }catch(e){showErr('err-login','Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Sign in';}
 }
+function adminSignOut(){
+  clearAdminSession();matchCache={};ovMatchCache={};
+  adminState={eventCode:null,matchNumber:null,matchDescription:null};
+  document.getElementById('results-panel').innerHTML='';
+  document.getElementById('match-field').style.display='none';
+  setScreen(0);
+}
 
-function adminSignOut(){clearAdminSession();matchCache={};adminState={eventCode:null,matchNumber:null,matchDescription:null};document.getElementById('results-panel').innerHTML='';document.getElementById('match-field').style.display='none';setScreen(0);}
-
-async function loadEvents() {
+// ── Match results ─────────────────────────────────────────────
+async function loadEvents(){
   const statusEl=document.getElementById('event-status'),sel=document.getElementById('event-select');
   sel.innerHTML='<option value="">— loading… —</option>';sel.disabled=true;
   statusEl.className='api-status loading';statusEl.textContent='Loading events…';
-  try {
-    const data=await frcFetch(SEASON+'/events?teamNumber='+TEAM);const events=data.Events||[];
+  try{
+    const data=await frcFetch(SEASON+'/events?teamNumber='+TEAM);
     statusEl.className='api-status';statusEl.style.display='none';
     sel.innerHTML='<option value="">— choose event —</option>';
-    events.forEach(e=>{const o=document.createElement('option');o.value=e.code;o.textContent=e.code+' — '+e.name;if(e.code===adminState.eventCode)o.selected=true;sel.appendChild(o);});
+    (data.Events||[]).forEach(e=>{const o=document.createElement('option');o.value=e.code;o.textContent=e.code+' — '+e.name;if(e.code===adminState.eventCode)o.selected=true;sel.appendChild(o);});
     sel.disabled=false;if(adminState.eventCode)loadMatches();
   }catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
 }
-
 function onEventChange(){
-  const sel=document.getElementById('event-select');adminState.eventCode=sel.value;adminState.matchNumber=null;
-  matchCache={};document.getElementById('results-panel').innerHTML='';
+  adminState.eventCode=document.getElementById('event-select').value;
+  adminState.matchNumber=null;matchCache={};
+  document.getElementById('results-panel').innerHTML='';
   document.getElementById('match-field').style.display=adminState.eventCode?'block':'none';
   if(adminState.eventCode)loadMatches();
 }
-
 async function loadMatches(){
   const statusEl=document.getElementById('match-status'),sel=document.getElementById('match-select');
   document.getElementById('match-field').style.display='block';
   sel.innerHTML='<option value="">— loading… —</option>';sel.disabled=true;
   statusEl.className='api-status loading';statusEl.textContent='Loading matches…';
-  try {
+  try{
     const data=await frcFetch(SEASON+'/schedule/'+adminState.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM);
-    const matches=data.Schedule||[];
     statusEl.className='api-status';statusEl.style.display='none';
-    matchCache={};matches.forEach(m=>{matchCache[m.matchNumber]=m;});
+    matchCache={};(data.Schedule||[]).forEach(m=>{matchCache[m.matchNumber]=m;});
     sel.innerHTML='<option value="">— choose match —</option>';
-    matches.forEach(m=>{const o=document.createElement('option');o.value=m.matchNumber;o.textContent=m.description||('Qualification '+m.matchNumber);if(String(m.matchNumber)===String(adminState.matchNumber))o.selected=true;sel.appendChild(o);});
+    (data.Schedule||[]).forEach(m=>{const o=document.createElement('option');o.value=m.matchNumber;o.textContent=m.description||('Qualification '+m.matchNumber);if(String(m.matchNumber)===String(adminState.matchNumber))o.selected=true;sel.appendChild(o);});
     sel.disabled=false;if(adminState.matchNumber)loadResults();
   }catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
 }
-
 function onMatchChange(){
-  const sel=document.getElementById('match-select');adminState.matchNumber=sel.value;adminState.matchDescription=sel.options[sel.selectedIndex]?.textContent||'';
+  const sel=document.getElementById('match-select');
+  adminState.matchNumber=sel.value;adminState.matchDescription=sel.options[sel.selectedIndex]?.textContent||'';
   document.getElementById('results-panel').innerHTML='';if(adminState.matchNumber)loadResults();
+}
+
+function rankPredictions(predictions,actualDelta){
+  const withDiff=predictions.map(p=>({...p,diff:Math.abs(p.score_delta-actualDelta)}));
+  withDiff.sort((a,b)=>a.diff-b.diff);
+  const PM=[5,4,3,2,1];let cr=1;
+  return withDiff.map((p,i)=>{if(i>0&&withDiff[i].diff!==withDiff[i-1].diff)cr=i+1;return{...p,rank:cr,pts:cr<=5?PM[cr-1]:0,deltaDiff:p.diff};});
 }
 
 async function loadResults(){
   const panel=document.getElementById('results-panel');
-  panel.innerHTML='<div class="api-status loading" style="display:block;">Loading match results and predictions…</div>';
-  try {
-    const [matchData,predictions]=await Promise.all([
+  panel.innerHTML='<div class="api-status loading" style="display:block;">Loading…</div>';
+  try{
+    const [matchData,predictions,overrideRows]=await Promise.all([
       frcFetch(SEASON+'/matches/'+adminState.eventCode+'?tournamentLevel=Qualification&matchNumber='+adminState.matchNumber),
-      supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)')
+      supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)'),
+      supa.query('match_overrides?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&is_active=eq.true&select=override_type,manual_score_red,manual_score_blue,manual_winner')
     ]);
-    const matches=matchData.Matches||[];
-    const match=matches.find(m=>String(m.matchNumber)===String(adminState.matchNumber));
+    const activeOverride=Array.isArray(overrideRows)&&overrideRows.length?overrideRows[0]:null;
+    let match=(matchData.Matches||[]).find(m=>String(m.matchNumber)===String(adminState.matchNumber));
+    if(activeOverride?.override_type==='rematch'&&activeOverride.manual_score_red!=null){
+      match={matchNumber:adminState.matchNumber,scoreRedFinal:activeOverride.manual_score_red,scoreBlueFinal:activeOverride.manual_score_blue};
+    }
     let html='';
-
+    if(activeOverride){
+      const isPending=activeOverride.override_type==='rematch'&&activeOverride.manual_score_red==null;
+      const label=activeOverride.override_type==='test'?'🧪 Test mode active':(isPending?'🔁 Rematch — awaiting final score':'🔁 Rematch — manual scores applied');
+      html+=`<div style="margin-bottom:0.75rem;"><span class="override-badge ${activeOverride.override_type}">${label}</span></div>`;
+    }
     if(match&&match.scoreRedFinal!=null&&match.scoreBlueFinal!=null){
-      const rS=match.scoreRedFinal,bS=match.scoreBlueFinal;
-      const redWins=rS>bS,blueWins=bS>rS,actualDelta=Math.abs(rS-bS);
-      const correctAlliance=redWins?'red':(blueWins?'blue':null);
-
-      // Auto-calculate points
-      await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,actualDelta,correctAlliance,predictions,false);
-
-      html+=`<div class="score-row">
-        <div class="score-card red"><div class="winner-tag">${redWins?'WINNER':''}</div><div class="score-label">Red Alliance</div><div class="score-num">${rS}</div></div>
-        <div class="score-card blue"><div class="winner-tag">${blueWins?'WINNER':''}</div><div class="score-label">Blue Alliance</div><div class="score-num">${bS}</div></div>
-      </div>
-      <div class="score-delta-display">Score delta: <strong>${actualDelta}</strong></div>`;
-
-      // Points calc button row
-      html+=`<div class="pts-calc-row">
-        <span class="pts-status done" id="pts-status">✓ Points calculated</span>
-        <button class="btn primary sm" onclick="recalcPoints()">Recalculate points</button>
-      </div>`;
-
+      const rS=match.scoreRedFinal,bS=match.scoreBlueFinal,ad=Math.abs(rS-bS);
+      const rW=rS>bS,bW=bS>rS,ca=rW?'red':(bW?'blue':null);
+      await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,ad,ca,predictions,false);
+      html+=`<div class="score-row"><div class="score-card red"><div class="winner-tag">${rW?'WINNER':''}</div><div class="score-label">Red Alliance</div><div class="score-num">${rS}</div></div><div class="score-card blue"><div class="winner-tag">${bW?'WINNER':''}</div><div class="score-label">Blue Alliance</div><div class="score-num">${bS}</div></div></div>`;
+      html+=`<div class="score-delta-display">Score delta: <strong>${ad}</strong></div>`;
+      html+=`<div class="pts-calc-row"><span class="pts-status done" id="pts-status">✓ Points calculated</span><button class="btn primary sm" onclick="recalcPoints()">Recalculate</button></div>`;
       if(predictions.length){
-        // Use tie-aware ranking
-        const ranked=rankPredictions(predictions,actualDelta);
-        const closest=ranked[0];
-        const closestUser=closest?(closest.users?.first_name||'')+' '+(closest.users?.last_name||''):null;
-
-        if(closestUser){
-          html+=`<div class="winner-announce">
-            <div class="w-label">CLOSEST PREDICTION</div>
-            <div class="w-name">${closestUser}${ranked.filter(r=>r.rank===1).length>1?' (tied)':''}</div>
-            <div class="w-detail">Delta off by ${closest.deltaDiff}</div>
-          </div>`;
-        }
-
+        const ranked=rankPredictions(predictions,ad);
+        const c=ranked[0];
+        if(c){const cn=(c.users?.first_name||'')+' '+(c.users?.last_name||'');html+=`<div class="winner-announce"><div class="w-label">CLOSEST PREDICTION</div><div class="w-name">${cn}${ranked.filter(r=>r.rank===1).length>1?' (tied)':''}</div><div class="w-detail">Delta off by ${c.deltaDiff}</div></div>`;}
         html+=`<div class="table-wrap"><table class="pred-table"><thead><tr><th>Rank</th><th>User</th><th>Alliance</th><th>Delta</th><th>Off by</th><th>Pts</th><th>Result</th></tr></thead><tbody>`;
         ranked.forEach(p=>{
-          const userName=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
-          const correctPick=correctAlliance&&p.winning_alliance===correctAlliance;
-          html+=`<tr class="${correctPick?'correct-row':''}"><td>${p.rank}</td><td>${userName}</td><td><span class="badge badge-${p.winning_alliance}">${p.winning_alliance}</span></td><td>${p.score_delta}</td><td>${p.deltaDiff}</td><td>${p.pts?`<span class="pts-badge">+${p.pts}</span>`:''}</td><td><span class="badge ${correctPick?'badge-correct':'badge-wrong'}">${correctPick?'correct':'wrong'}</span></td></tr>`;
+          const un=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
+          const cp=ca&&p.winning_alliance===ca;
+          html+=`<tr class="${cp?'correct-row':''}"><td>${p.rank}</td><td>${un}</td><td><span class="badge badge-${p.winning_alliance}">${p.winning_alliance}</span></td><td>${p.score_delta}</td><td>${p.deltaDiff}</td><td>${p.pts?`<span class="pts-badge">+${p.pts}</span>`:''}</td><td><span class="badge ${cp?'badge-correct':'badge-wrong'}">${cp?'correct':'wrong'}</span></td></tr>`;
         });
         html+=`</tbody></table></div>`;
-      } else {
-        html+=`<div class="no-data">No predictions submitted for this match yet.</div>`;
+      }else{html+=`<div class="no-data">No predictions submitted yet.</div>`;}
+    }else{
+      if(activeOverride?.override_type==='rematch'&&activeOverride.manual_score_red==null){
+        html+=`<div class="no-data" style="background:#fffbf0;border-color:#f0c060;color:#7a5500;">Rematch active — awaiting final score. Users can now re-predict.</div>`;
+      }else{
+        html+=`<div class="no-data">Match has not been played yet.</div>`;
       }
-
-    } else {
-      html+=`<div class="no-data">This match has not been played yet — no scores available.</div>`;
       if(predictions.length){
         html+=`<div style="font-size:12px;color:#888;margin-bottom:8px;">${predictions.length} prediction(s) submitted</div>`;
         html+=`<div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Alliance</th><th>Delta</th></tr></thead><tbody>`;
@@ -352,316 +386,268 @@ async function loadResults(){
   }catch(e){panel.innerHTML=`<div class="api-status error" style="display:block;">Failed: ${e.message}</div>`;}
 }
 
-// Rank predictions with tie awareness — same diff = same rank, next rank skips
-function rankPredictions(predictions, actualDelta) {
-  const withDiff = predictions.map(p => ({ ...p, diff: Math.abs(p.score_delta - actualDelta) }));
-  withDiff.sort((a,b) => a.diff - b.diff);
-  const POINT_MAP = [5,4,3,2,1];
-  let currentRank = 1;
-  return withDiff.map((p,i) => {
-    if (i > 0 && withDiff[i].diff !== withDiff[i-1].diff) currentRank = i + 1;
-    const pts = currentRank <= 5 ? POINT_MAP[currentRank-1] : 0;
-    return { ...p, rank: currentRank, pts, deltaDiff: p.diff };
-  });
-}
-
-// Calculate and save points for a match
-async function calculatePoints(eventCode,matchNumber,matchDescription,scoreRed,scoreBlue,actualDelta,correctAlliance,predictions,showFeedback){
-  if(!predictions.length)return;
-  try {
-    // Save match result
-    await supa.query('match_results','POST',{event_code:eventCode,match_number:parseInt(matchNumber),match_description:matchDescription||null,score_red:scoreRed,score_blue:scoreBlue,score_delta:actualDelta,winning_alliance:correctAlliance||'tie'});
-  }catch(e){
-    // Already exists — update it
-    try{await supa.query('match_results?event_code=eq.'+eventCode+'&match_number=eq.'+matchNumber,'PATCH',{score_red:scoreRed,score_blue:scoreBlue,score_delta:actualDelta,winning_alliance:correctAlliance||'tie',calculated_at:new Date().toISOString()});}catch{}
+async function calculatePoints(ec,mn,md,sR,sB,ad,ca,preds,fb){
+  if(!preds.length)return;
+  try{await supa.query('match_results','POST',{event_code:ec,match_number:parseInt(mn),match_description:md||null,score_red:sR,score_blue:sB,score_delta:ad,winning_alliance:ca||'tie'});}
+  catch(e){try{await supa.query('match_results?event_code=eq.'+ec+'&match_number=eq.'+mn,'PATCH',{score_red:sR,score_blue:sB,score_delta:ad,winning_alliance:ca||'tie',calculated_at:new Date().toISOString()});}catch{}}
+  for(const p of rankPredictions(preds,ad)){
+    try{await supa.query('leaderboard_points','POST',{user_id:p.user_id,event_code:ec,match_number:parseInt(mn),points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff});}
+    catch(e){try{await supa.query('leaderboard_points?user_id=eq.'+p.user_id+'&event_code=eq.'+ec+'&match_number=eq.'+mn,'PATCH',{points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff,calculated_at:new Date().toISOString()});}catch{}}
   }
-
-  // Rank predictions with tie-aware logic
-  const ranked = rankPredictions(predictions, actualDelta);
-
-  // Upsert leaderboard_points for each user
-  for(const p of ranked){
-    try {
-      await supa.query('leaderboard_points','POST',{user_id:p.user_id,event_code:eventCode,match_number:parseInt(matchNumber),points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff});
-    }catch(e){
-      try{await supa.query('leaderboard_points?user_id=eq.'+p.user_id+'&event_code=eq.'+eventCode+'&match_number=eq.'+matchNumber,'PATCH',{points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff,calculated_at:new Date().toISOString()});}catch{}
-    }
-  }
-
-  if(showFeedback){
-    const statusEl=document.getElementById('pts-status');
-    if(statusEl){statusEl.textContent='✓ Points recalculated';statusEl.className='pts-status done';}
-  }
+  if(fb){const s=document.getElementById('pts-status');if(s){s.textContent='✓ Points recalculated';s.className='pts-status done';}}
 }
 
 async function recalcPoints(){
-  const panel=document.getElementById('results-panel');
-  const statusEl=document.getElementById('pts-status');
-  if(statusEl){statusEl.textContent='Recalculating…';statusEl.className='pts-status';}
-  try {
-    const [matchData,predictions]=await Promise.all([
+  const s=document.getElementById('pts-status');if(s){s.textContent='Recalculating…';s.className='pts-status';}
+  try{
+    const [md,preds,ovRows]=await Promise.all([
       frcFetch(SEASON+'/matches/'+adminState.eventCode+'?tournamentLevel=Qualification&matchNumber='+adminState.matchNumber),
-      supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)')
+      supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)'),
+      supa.query('match_overrides?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&is_active=eq.true&select=override_type,manual_score_red,manual_score_blue,manual_winner')
     ]);
-    const matches=matchData.Matches||[];
-    const match=matches.find(m=>String(m.matchNumber)===String(adminState.matchNumber));
-    if(!match||match.scoreRedFinal==null){if(statusEl){statusEl.textContent='No scores available yet';statusEl.className='pts-status';}return;}
-    const rS=match.scoreRedFinal,bS=match.scoreBlueFinal,actualDelta=Math.abs(rS-bS);
-    const correctAlliance=rS>bS?'red':(bS>rS?'blue':null);
-    await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,actualDelta,correctAlliance,predictions,true);
-  }catch(e){if(statusEl){statusEl.textContent='Failed: '+e.message;statusEl.className='pts-status';}}
+    const ov=Array.isArray(ovRows)&&ovRows.length?ovRows[0]:null;
+    let match=(md.Matches||[]).find(m=>String(m.matchNumber)===String(adminState.matchNumber));
+    if(ov?.override_type==='rematch'&&ov.manual_score_red!=null)match={scoreRedFinal:ov.manual_score_red,scoreBlueFinal:ov.manual_score_blue};
+    if(!match||match.scoreRedFinal==null){if(s){s.textContent='No scores yet';s.className='pts-status';}return;}
+    const rS=match.scoreRedFinal,bS=match.scoreBlueFinal,ad=Math.abs(rS-bS),ca=rS>bS?'red':(bS>rS?'blue':null);
+    await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,ad,ca,preds,true);
+  }catch(e){if(s){s.textContent='Failed: '+e.message;s.className='pts-status';}}
 }
 
-async function loadUsers(){
-  const subEl=document.getElementById('users-sub'),listEl=document.getElementById('users-list');
-  subEl.textContent='Loading users…';listEl.innerHTML='';
-  try {
-    const users=await supa.query('users?order=created_at.asc&select=id,first_name,last_name,email,is_verified,created_at');
-    subEl.textContent=users.length+' user(s) registered';
-    if(!users.length){listEl.innerHTML='<div style="padding:1rem;font-size:13px;color:#888;">No users yet.</div>';return;}
-    listEl.innerHTML=users.map(u=>`
-      <div class="user-row" id="urow-${u.id}">
-        <div>
-          <div class="user-name">${u.first_name} ${u.last_name}</div>
-          <div class="user-email">${u.email||''}</div>
-          <div class="user-date">${new Date(u.created_at).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</div>
-        </div>
-        <div class="user-actions">
-        ${u.is_verified?`<button class="verify-btn verified" disabled>Verified</button>`:`<button class="verify-btn approve" onclick="approveUser('${u.id}')">Approve</button>`}
-        <button class="delete-btn" onclick="deleteUser('${u.id}', '${u.first_name} ${u.last_name}')">Delete</button>
-      </div>
-      </div>`).join('');
-  }catch(e){subEl.textContent='Failed: '+e.message;}
-}
-
-async function approveUser(userId){
-  try {
-    await supa.query('users?id=eq.'+userId,'PATCH',{is_verified:true});
-    const row=document.getElementById('urow-'+userId);
-    if(row)row.querySelector('.verify-btn').outerHTML='<button class="verify-btn verified" disabled>Verified</button>';
-  }catch(e){alert('Failed: '+e.message);}
-}
-
-async function deleteUser(userId, userName){
-  if(!confirm('Delete ' + userName + '? This will remove their account and all predictions permanently.')) return;
-  try {
-    // Delete from users table (cascades to predictions and leaderboard_points)
-    await supa.query('users?id=eq.'+userId,'DELETE');
-    const row=document.getElementById('urow-'+userId);
-    if(row) row.remove();
-    // Update count
-    const subEl=document.getElementById('users-sub');
-    const remaining=document.querySelectorAll('[id^="urow-"]').length;
-    subEl.textContent=remaining+' user(s) registered';
-    if(!remaining) document.getElementById('users-list').innerHTML='<div style="padding:1rem;font-size:13px;color:#888;">No users yet.</div>';
-  }catch(e){alert('Failed to delete: '+e.message);}
-}
-
-// ── Alliance admin ────────────────────────────────────────────
-let allianceAdminEventCode = null;
-let allianceAdminEvents = [];
-
-async function loadAllianceAdminTab() {
-  const statusEl=document.getElementById('alliance-event-status');
-  const sel=document.getElementById('alliance-event-select');
-  if(allianceAdminEvents.length) return; // already loaded
-  sel.innerHTML='<option value="">— loading… —</option>'; sel.disabled=true;
-  statusEl.className='api-status loading'; statusEl.textContent='Loading events…';
-  try {
+// ── Alliance tab ──────────────────────────────────────────────
+async function loadAllianceAdminTab(){
+  if(allianceAdminEvents.length)return;
+  const statusEl=document.getElementById('alliance-event-status'),sel=document.getElementById('alliance-event-select');
+  sel.innerHTML='<option value="">— loading… —</option>';sel.disabled=true;
+  statusEl.className='api-status loading';statusEl.textContent='Loading events…';
+  try{
     const data=await frcFetch(SEASON+'/events?teamNumber='+TEAM);
     allianceAdminEvents=data.Events||[];
-    statusEl.className='api-status'; statusEl.style.display='none';
+    statusEl.className='api-status';statusEl.style.display='none';
     sel.innerHTML='<option value="">— choose event —</option>';
-    allianceAdminEvents.forEach(e=>{
-      const o=document.createElement('option');
-      o.value=e.code; o.textContent=e.code+' — '+e.name;
-      sel.appendChild(o);
-    });
+    allianceAdminEvents.forEach(e=>{const o=document.createElement('option');o.value=e.code;o.textContent=e.code+' — '+e.name;sel.appendChild(o);});
     sel.disabled=false;
-  } catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
+  }catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
 }
-
-async function onAllianceEventChange() {
-  const sel=document.getElementById('alliance-event-select');
-  allianceAdminEventCode=sel.value;
+async function onAllianceEventChange(){
+  allianceAdminEventCode=document.getElementById('alliance-event-select').value;
   const panel=document.getElementById('alliance-admin-panel');
   if(!allianceAdminEventCode){panel.innerHTML='';return;}
   await loadAllianceResults(allianceAdminEventCode);
 }
-
-async function loadAllianceResults(eventCode) {
+async function loadAllianceResults(ec){
   const panel=document.getElementById('alliance-admin-panel');
   panel.innerHTML='<div class="api-status loading" style="display:block;">Checking FIRST API for alliance selections…</div>';
-  try {
-    const [apiData, allPredictions] = await Promise.all([
-      frcFetch(SEASON+'/alliances/'+eventCode),
-      supa.query('alliance_predictions?event_code=eq.'+eventCode+'&select=*,users(first_name,last_name)')
-    ]);
-
-    const alliances = apiData.Alliances || [];
-
-    if(!alliances.length){
-      // No alliance data yet — show all user predictions
-      panel.innerHTML = buildPredictionsOnlyView(allPredictions);
-      return;
-    }
-
-    // Alliance data available — auto score
-    await scoreAlliancePredictions(eventCode, alliances, allPredictions);
-    panel.innerHTML = buildAllianceScoredView(alliances, allPredictions);
-
-  } catch(e){
-    panel.innerHTML=`<div class="api-status error" style="display:block;">Failed: ${e.message}</div>`;
-  }
+  try{
+    const [apiData,allPreds]=await Promise.all([frcFetch(SEASON+'/alliances/'+ec),supa.query('alliance_predictions?event_code=eq.'+ec+'&select=*,users(first_name,last_name)')]);
+    const alliances=apiData.Alliances||[];
+    if(!alliances.length){panel.innerHTML=buildPredsOnlyView(allPreds);return;}
+    await scoreAlliancePreds(ec,alliances,allPreds);
+    panel.innerHTML=buildAllianceScoredView(alliances,allPreds);
+  }catch(e){panel.innerHTML=`<div class="api-status error" style="display:block;">Failed: ${e.message}</div>`;}
 }
-
-function buildPredictionsOnlyView(allPredictions) {
-  if(!allPredictions.length) return '<div class="no-data">No alliance predictions submitted yet.</div>';
-
-  // Group by user
-  const byUser={};
-  allPredictions.forEach(p=>{
-    const name=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
-    if(!byUser[name])byUser[name]=[];
-    byUser[name].push(p);
-  });
-
-  let html='<div class="no-data" style="margin-bottom:1rem;">Alliance selection not yet available from FIRST API. Showing submitted predictions.</div>';
-  html+='<div class="table-wrap"><div style="padding:0;">';
-  Object.entries(byUser).forEach(([name,preds])=>{
-    html+=`<div class="user-alliance-row"><span style="font-weight:500;">${name}</span><span style="color:#888;">${preds.length}/8 alliances predicted</span></div>`;
-  });
-  html+='</div></div>';
-  return html;
+function buildPredsOnlyView(preds){
+  if(!preds.length)return'<div class="no-data">No alliance predictions submitted yet.</div>';
+  const byUser={};preds.forEach(p=>{const n=(p.users?.first_name||'')+' '+(p.users?.last_name||'');if(!byUser[n])byUser[n]=[];byUser[n].push(p);});
+  let html='<div class="no-data" style="margin-bottom:1rem;">Alliance selection not yet available.</div><div class="table-wrap"><div style="padding:0;">';
+  Object.entries(byUser).forEach(([n,ps])=>{html+=`<div class="user-alliance-row"><span style="font-weight:500;">${n}</span><span style="color:#888;">${ps.length}/8 alliances predicted</span></div>`;});
+  return html+'</div></div>';
 }
-
-async function scoreAlliancePredictions(eventCode, alliances, allPredictions) {
-  // Save actual alliance results
+async function scoreAlliancePreds(ec,alliances,preds){
+  const actual={};
   for(const a of alliances){
-    const num=a.number||a.allianceNumber||a.name?.replace(/\D/g,'');
-    const teams=a.picks||a.teams||[];
-    const captain=teams[0]||null;
-    const pick1=teams[1]||null;
-    const pick2=teams[2]||null;
-    try {
-      await supa.query('alliance_results','POST',{event_code:eventCode,alliance_num:parseInt(num),captain,pick1,pick2});
-    } catch(e){
-      try{await supa.query('alliance_results?event_code=eq.'+eventCode+'&alliance_num=eq.'+num,'PATCH',{captain,pick1,pick2,calculated_at:new Date().toISOString()});}catch{}
-    }
-  }
-
-  // Build actual lookup: allianceNum -> {captain, pick1, pick2}
-  const actual={};
-  alliances.forEach(a=>{
-    const num=parseInt(a.number||a.allianceNumber||a.name?.replace(/\D/g,''));
-    const teams=a.picks||a.teams||[];
+    const num=parseInt(a.number||a.allianceNumber);const teams=a.picks||a.teams||[];
     actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};
-  });
-
-  // Score each user
-  const userPoints={};
-  allPredictions.forEach(p=>{
-    const uid=p.user_id;
-    if(!userPoints[uid]) userPoints[uid]=0;
-    const act=actual[p.alliance_num];
-    if(!act) return;
+    try{await supa.query('alliance_results','POST',{event_code:ec,alliance_num:num,captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null});}
+    catch(e){try{await supa.query('alliance_results?event_code=eq.'+ec+'&alliance_num=eq.'+num,'PATCH',{captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null,calculated_at:new Date().toISOString()});}catch{}}
+  }
+  const userPts={};
+  preds.forEach(p=>{
+    const uid=p.user_id;if(!userPts[uid])userPts[uid]=0;
+    const act=actual[p.alliance_num];if(!act)return;
     let pts=0;
-    if(act.captain&&p.captain===act.captain) pts+=3;
-    if(act.pick1&&p.pick1===act.pick1) pts+=2;
-    if(act.pick2&&p.pick2===act.pick2) pts+=1;
-    // Bonus: all 3 exact
-    if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2) pts+=2;
-    userPoints[uid]+=pts;
+    if(act.captain&&p.captain===act.captain)pts+=3;
+    if(act.pick1&&p.pick1===act.pick1)pts+=2;
+    if(act.pick2&&p.pick2===act.pick2)pts+=1;
+    if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2)pts+=2;
+    userPts[uid]+=pts;
   });
-
-  // Upsert alliance_points
-  for(const [uid,pts] of Object.entries(userPoints)){
-    try {
-      await supa.query('alliance_points','POST',{user_id:uid,event_code:eventCode,points:pts});
-    } catch(e){
-      try{await supa.query('alliance_points?user_id=eq.'+uid+'&event_code=eq.'+eventCode,'PATCH',{points:pts,calculated_at:new Date().toISOString()});}catch{}
-    }
+  for(const [uid,pts] of Object.entries(userPts)){
+    try{await supa.query('alliance_points','POST',{user_id:uid,event_code:ec,points:pts});}
+    catch(e){try{await supa.query('alliance_points?user_id=eq.'+uid+'&event_code=eq.'+ec,'PATCH',{points:pts,calculated_at:new Date().toISOString()});}catch{}}
   }
 }
-
-function buildAllianceScoredView(alliances, allPredictions) {
-  // Build actual lookup
-  const actual={};
-  alliances.forEach(a=>{
-    const num=parseInt(a.number||a.allianceNumber||a.name?.replace(/\D/g,''));
-    const teams=a.picks||a.teams||[];
-    actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};
-  });
-
-  // Build user scores
+function buildAllianceScoredView(alliances,preds){
+  const actual={};alliances.forEach(a=>{const num=parseInt(a.number||a.allianceNumber);const teams=a.picks||a.teams||[];actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};});
   const userScores={};
-  allPredictions.forEach(p=>{
-    const uid=p.user_id;
-    const name=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
-    if(!userScores[uid]) userScores[uid]={name,total:0,details:[]};
-    const act=actual[p.alliance_num];
-    if(!act){userScores[uid].details.push({num:p.alliance_num,pts:0});return;}
+  preds.forEach(p=>{
+    const uid=p.user_id;const n=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
+    if(!userScores[uid])userScores[uid]={name:n,total:0};
+    const act=actual[p.alliance_num];if(!act)return;
     let pts=0;
-    if(act.captain&&p.captain===act.captain) pts+=3;
-    if(act.pick1&&p.pick1===act.pick1) pts+=2;
-    if(act.pick2&&p.pick2===act.pick2) pts+=1;
-    if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2) pts+=2;
-    userScores[uid].total+=pts; userScores[uid].details.push({num:p.alliance_num,pts});
+    if(act.captain&&p.captain===act.captain)pts+=3;
+    if(act.pick1&&p.pick1===act.pick1)pts+=2;
+    if(act.pick2&&p.pick2===act.pick2)pts+=1;
+    if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2)pts+=2;
+    userScores[uid].total+=pts;
   });
-
-  let html='<div style="font-size:12px;font-weight:500;color:#1a9e6e;margin-bottom:0.75rem;">✓ Alliance selection complete — scores calculated automatically</div>';
-
-  // Actual alliances grid
-  html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;">Actual alliances</div>';
-  html+='<div class="alliance-grid">';
-  for(let i=1;i<=8;i++){
-    const a=actual[i]||{captain:'—',pick1:'—',pick2:'—'};
-    html+=`<div class="alliance-card-admin"><h4>ALLIANCE ${i}</h4>
-      <div class="alliance-team-row"><span class="pos">Captain</span><span class="team">${a.captain||'—'}</span></div>
-      <div class="alliance-team-row"><span class="pos">Pick 1</span><span class="team">${a.pick1||'—'}</span></div>
-      <div class="alliance-team-row"><span class="pos">Pick 2</span><span class="team">${a.pick2||'—'}</span></div>
-    </div>`;
-  }
+  let html='<div style="font-size:12px;color:#1a9e6e;font-weight:500;margin-bottom:0.75rem;">✓ Alliance selection complete — scores calculated</div>';
+  html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;">Actual alliances</div><div class="alliance-grid">';
+  for(let i=1;i<=8;i++){const a=actual[i]||{captain:'—',pick1:'—',pick2:'—'};html+=`<div class="alliance-card-admin"><h4>ALLIANCE ${i}</h4><div class="alliance-team-row"><span class="pos">Captain</span><span class="team">${a.captain||'—'}</span></div><div class="alliance-team-row"><span class="pos">Pick 1</span><span class="team">${a.pick1||'—'}</span></div><div class="alliance-team-row"><span class="pos">Pick 2</span><span class="team">${a.pick2||'—'}</span></div></div>`;}
   html+='</div>';
-
-  // User scores table
   const sorted=Object.values(userScores).sort((a,b)=>b.total-a.total);
-  if(sorted.length){
-    html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;">User scores</div>';
-    html+='<div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Pts</th></tr></thead><tbody>';
-    sorted.forEach(u=>{
-      html+=`<tr><td>${u.name}</td><td><span class="alliance-pts-badge">+${u.total}</span></td></tr>`;
-    });
-    html+='</tbody></table></div>';
-  } else {
-    html+='<div class="no-data">No alliance predictions submitted.</div>';
-  }
-
-  // Detailed breakdown per user
-  html+='<div style="font-size:13px;font-weight:500;margin:0.75rem 0 8px;">Detailed breakdown</div>';
-  sorted.forEach(u=>{
-    html+=`<div style="font-size:12px;font-weight:500;color:#888;margin-bottom:4px;">${u.name} — ${u.total} pts total</div>`;
-    html+='<div class="table-wrap" style="margin-bottom:0.75rem;"><table class="pred-table"><thead><tr><th>Alliance</th><th>Captain</th><th>Pick 1</th><th>Pick 2</th><th>Pts</th></tr></thead><tbody>';
-    u.details.sort((a,b)=>a.num-b.num).forEach(d=>{
-      const pred=allPredictions.find(p=>p.user_id===Object.keys(Object.fromEntries(Object.entries(userScores).filter(([,v])=>v.name===u.name)))[0]&&p.alliance_num===d.num);
-      const act=actual[d.num]||{};
-      const capClass=pred&&act.captain&&pred.captain===act.captain?'correct':'wrong';
-      const p1Class=pred&&act.pick1&&pred.pick1===act.pick1?'correct':'wrong';
-      const p2Class=pred&&act.pick2&&pred.pick2===act.pick2?'correct':'wrong';
-      html+=`<tr>
-        <td>${d.num}</td>
-        <td class="${capClass}">${pred?.captain||'—'}</td>
-        <td class="${p1Class}">${pred?.pick1||'—'}</td>
-        <td class="${p2Class}">${pred?.pick2||'—'}</td>
-        <td>${d.pts?`<span class="alliance-pts-badge">+${d.pts}</span>`:'0'}</td>
-      </tr>`;
-    });
-    html+='</tbody></table></div>';
-  });
-
+  if(sorted.length){html+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;">User scores</div><div class="table-wrap"><table class="pred-table"><thead><tr><th>User</th><th>Pts</th></tr></thead><tbody>';sorted.forEach(u=>{html+=`<tr><td>${u.name}</td><td><span class="alliance-pts-badge">+${u.total}</span></td></tr>`;});html+='</tbody></table></div>';}
   return html;
 }
 
+// ── Users tab ─────────────────────────────────────────────────
+async function loadUsers(){
+  const sub=document.getElementById('users-sub'),list=document.getElementById('users-list');
+  sub.textContent='Loading users…';list.innerHTML='';
+  try{
+    const users=await supa.query('users?order=created_at.asc&select=id,first_name,last_name,email,is_verified,created_at');
+    sub.textContent=users.length+' user(s) registered';
+    if(!users.length){list.innerHTML='<div style="padding:1rem;font-size:13px;color:#888;">No users yet.</div>';return;}
+    list.innerHTML=users.map(u=>`<div class="user-row" id="urow-${u.id}"><div><div class="user-name">${u.first_name} ${u.last_name}</div><div class="user-email">${u.email||''}</div><div class="user-date">${new Date(u.created_at).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})}</div></div><div class="user-actions">${u.is_verified?`<button class="verify-btn verified" disabled>Verified</button>`:`<button class="verify-btn approve" onclick="approveUser('${u.id}')">Approve</button>`}<button class="delete-btn" onclick="deleteUser('${u.id}','${u.first_name} ${u.last_name}')">Delete</button></div></div>`).join('');
+  }catch(e){sub.textContent='Failed: '+e.message;}
+}
+async function approveUser(uid){
+  try{await supa.query('users?id=eq.'+uid,'PATCH',{is_verified:true});const r=document.getElementById('urow-'+uid);if(r)r.querySelector('.verify-btn').outerHTML='<button class="verify-btn verified" disabled>Verified</button>';}
+  catch(e){alert('Failed: '+e.message);}
+}
+async function deleteUser(uid,name){
+  if(!confirm('Delete '+name+'? This removes their account and all predictions permanently.'))return;
+  try{
+    await supa.query('users?id=eq.'+uid,'DELETE');
+    const r=document.getElementById('urow-'+uid);if(r)r.remove();
+    const rem=document.querySelectorAll('[id^="urow-"]').length;
+    document.getElementById('users-sub').textContent=rem+' user(s) registered';
+    if(!rem)document.getElementById('users-list').innerHTML='<div style="padding:1rem;font-size:13px;color:#888;">No users yet.</div>';
+  }catch(e){alert('Failed: '+e.message);}
+}
+
+// ── Overrides tab ─────────────────────────────────────────────
+async function loadOverridesTab(){
+  if(ovEvents.length)return;
+  const statusEl=document.getElementById('ov-event-status'),sel=document.getElementById('ov-event-select');
+  sel.innerHTML='<option value="">— loading… —</option>';sel.disabled=true;
+  statusEl.className='api-status loading';statusEl.textContent='Loading events…';
+  try{
+    const data=await frcFetch(SEASON+'/events?teamNumber='+TEAM);
+    ovEvents=data.Events||[];
+    statusEl.className='api-status';statusEl.style.display='none';
+    sel.innerHTML='<option value="">— choose event —</option>';
+    ovEvents.forEach(e=>{const o=document.createElement('option');o.value=e.code;o.textContent=e.code+' — '+e.name;sel.appendChild(o);});
+    sel.disabled=false;
+  }catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
+}
+async function onOverrideEventChange(){
+  ovEventCode=document.getElementById('ov-event-select').value;
+  const mw=document.getElementById('ov-match-wrap'),aw=document.getElementById('ov-alliance-wrap');
+  if(!ovEventCode){mw.style.display='none';aw.style.display='none';return;}
+  mw.style.display='block';aw.style.display='block';
+  await loadOverrideMatches();
+  await refreshAllianceOverrideStatus();
+}
+async function loadOverrideMatches(){
+  const statusEl=document.getElementById('ov-match-status'),sel=document.getElementById('ov-match-select');
+  sel.innerHTML='<option value="">— loading… —</option>';sel.disabled=true;
+  statusEl.className='api-status loading';statusEl.textContent='Loading matches…';
+  try{
+    const data=await frcFetch(SEASON+'/schedule/'+ovEventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM);
+    ovMatchCache={};(data.Schedule||[]).forEach(m=>{ovMatchCache[m.matchNumber]=m;});
+    statusEl.className='api-status';statusEl.style.display='none';
+    sel.innerHTML='<option value="">— choose match —</option>';
+    (data.Schedule||[]).forEach(m=>{const o=document.createElement('option');o.value=m.matchNumber;o.textContent=m.description||('Qualification '+m.matchNumber);sel.appendChild(o);});
+    sel.disabled=false;
+    await refreshMatchOverrideStatus();
+  }catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.disabled=false;}
+}
+async function refreshMatchOverrideStatus(){
+  const div=document.getElementById('ov-match-status-display');div.innerHTML='';
+  if(!ovEventCode)return;
+  try{
+    const overrides=await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&is_active=eq.true&select=match_number,override_type,manual_score_red,manual_score_blue,manual_winner');
+    if(!overrides.length){div.innerHTML='<div style="font-size:12px;color:#aaa;margin-top:6px;">No active overrides.</div>';return;}
+    let html='<div style="font-size:12px;font-weight:500;color:#888;margin:0.75rem 0 6px;">Active overrides</div>';
+    html+='<div class="table-wrap"><table class="pred-table"><thead><tr><th>Match</th><th>Type</th><th>Score</th><th></th></tr></thead><tbody>';
+    overrides.forEach(o=>{
+      const hasScore=o.override_type==='rematch'&&o.manual_score_red!=null;
+      const score=hasScore?`${o.manual_score_red}–${o.manual_score_blue} (${o.manual_winner})`:'pending';
+      html+=`<tr><td style="font-size:12px;">${ovMatchCache[o.match_number]?.description||'Qual '+o.match_number}</td><td><span class="override-badge ${o.override_type}">${o.override_type==='test'?'🧪':'🔁'}</span></td><td style="font-size:12px;${!hasScore?'color:#e24b4a;font-style:italic;':''}">${score}</td><td style="display:flex;gap:4px;">${o.override_type==='rematch'?`<button class="btn primary sm" style="font-size:11px;" onclick="openRematchModal(${o.match_number})">📝</button>`:''}<button class="btn sm" style="font-size:11px;" onclick="endOverride(${o.match_number})">End</button></td></tr>`;
+    });
+    html+='</tbody></table></div>';
+    div.innerHTML=html;
+  }catch(e){div.innerHTML=`<div style="font-size:12px;color:#a32d2d;margin-top:6px;">Failed: ${e.message}</div>`;}
+}
+async function activateOverride(type){
+  const sel=document.getElementById('ov-match-select');
+  const matchNum=sel.value;
+  if(!matchNum){alert('Please select a match first.');return;}
+  const matchLabel=sel.options[sel.selectedIndex]?.textContent||('Match '+matchNum);
+  if(type==='rematch'){
+    if(!confirm('Activate rematch for '+matchLabel+'?\n\nThis will immediately:\n• Wipe all user predictions for this match\n• Remove all leaderboard points for this match\n• Unlock the match for fresh predictions\n\nYou can enter the final score later using the 📝 button.'))return;
+    try{
+      await supa.query('predictions?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'DELETE');
+      await supa.query('leaderboard_points?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'DELETE');
+      await supa.query('match_results?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'DELETE');
+      try{await supa.query('match_overrides','POST',{event_code:ovEventCode,match_number:parseInt(matchNum),override_type:'rematch',is_active:true,manual_score_red:null,manual_score_blue:null,manual_winner:null});}
+      catch(e){await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'PATCH',{override_type:'rematch',is_active:true,manual_score_red:null,manual_score_blue:null,manual_winner:null});}
+      await refreshMatchOverrideStatus();
+      alert('Done — match unlocked, predictions wiped. Enter the final score using the 📝 button once the rematch is played.');
+    }catch(e){alert('Failed: '+e.message);}
+    return;
+  }
+  try{
+    try{await supa.query('match_overrides','POST',{event_code:ovEventCode,match_number:parseInt(matchNum),override_type:'test',is_active:true});}
+    catch(e){await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'PATCH',{override_type:'test',is_active:true,manual_score_red:null,manual_score_blue:null,manual_winner:null});}
+    await refreshMatchOverrideStatus();
+  }catch(e){alert('Failed: '+e.message);}
+}
+function openRematchModal(matchNum){
+  pendingRematchMatchNum=matchNum;
+  document.getElementById('rematch-modal').style.display='flex';
+  document.getElementById('rematch-match-label').textContent='Match: '+(ovMatchCache[matchNum]?.description||'Qualification '+matchNum);
+  document.getElementById('rm-red').value='';document.getElementById('rm-blue').value='';document.getElementById('rm-winner').value='';
+  showErr('err-rematch','');
+}
+function closeRematchModal(){document.getElementById('rematch-modal').style.display='none';pendingRematchMatchNum=null;}
+async function saveRematchScore(){
+  const red=parseInt(document.getElementById('rm-red').value);
+  const blue=parseInt(document.getElementById('rm-blue').value);
+  const winner=document.getElementById('rm-winner').value;
+  if(isNaN(red)||isNaN(blue)||!winner){showErr('err-rematch','Please fill in all fields.');return;}
+  const btn=document.getElementById('btn-save-score');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&match_number=eq.'+pendingRematchMatchNum,'PATCH',{manual_score_red:red,manual_score_blue:blue,manual_winner:winner});
+    closeRematchModal();await refreshMatchOverrideStatus();
+  }catch(e){showErr('err-rematch','Failed: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Save score';}
+}
+async function endOverride(matchNum){
+  if(!confirm('End override for this match? It will lock again using normal rules.'))return;
+  try{await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'PATCH',{is_active:false});await refreshMatchOverrideStatus();}
+  catch(e){alert('Failed: '+e.message);}
+}
+async function refreshAllianceOverrideStatus(){
+  const div=document.getElementById('ov-alliance-status-display');
+  try{
+    const rows=await supa.query('alliance_overrides?event_code=eq.'+ovEventCode+'&select=is_active');
+    if(rows.length&&rows[0].is_active)div.innerHTML='<span class="override-badge test">🧪 Test mode active — alliance predictions unlocked</span>';
+    else div.innerHTML='<div style="font-size:12px;color:#aaa;">No active alliance override.</div>';
+  }catch(e){div.innerHTML='';}
+}
+async function activateAllianceOverride(){
+  try{
+    try{await supa.query('alliance_overrides','POST',{event_code:ovEventCode,override_type:'test',is_active:true});}
+    catch(e){await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{is_active:true,override_type:'test'});}
+    await refreshAllianceOverrideStatus();
+  }catch(e){alert('Failed: '+e.message);}
+}
+async function endAllianceOverride(){
+  try{await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{is_active:false});await refreshAllianceOverrideStatus();}
+  catch(e){alert('Failed: '+e.message);}
+}
 
 boot();
 </script>

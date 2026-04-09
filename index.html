@@ -386,10 +386,22 @@ async function loadMatches() {
   sel.innerHTML='<option value="">— loading… —</option>'; sel.disabled=true; document.getElementById('btn-match').disabled=true;
   statusEl.className='api-status loading'; statusEl.textContent='Fetching qualification matches…';
   try {
-    const [data]=await Promise.all([frcFetch(SEASON+'/schedule/'+state.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM),loadSubmittedMatches(state.eventCode)]);
-    const matches=data.Schedule||[]; statusEl.className='api-status'; statusEl.style.display='none';
+    const [data,,overridesData]=await Promise.all([
+      frcFetch(SEASON+'/schedule/'+state.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM),
+      loadSubmittedMatches(state.eventCode),
+      supa.query('match_overrides?event_code=eq.'+state.eventCode+'&is_active=eq.true&select=match_number,override_type')
+    ]);
+    const matches=data.Schedule||[];
+    // Build set of unlocked match numbers
+    const unlockedMatches=new Set((Array.isArray(overridesData)?overridesData:[]).map(o=>String(o.match_number)));
+    statusEl.className='api-status'; statusEl.style.display='none';
     const now=new Date();
-    const available=matches.filter(m=>!submittedMatches.has(String(m.matchNumber))&&new Date(m.startTime)>now).length;
+    const available=matches.filter(m=>{
+      const already=submittedMatches.has(String(m.matchNumber));
+      const started=m.startTime&&new Date(m.startTime)<=now;
+      const unlocked=unlockedMatches.has(String(m.matchNumber));
+      return !already&&(!started||unlocked);
+    }).length;
     document.getElementById('match-sub').textContent=matches.length+' match(es) · '+submittedMatches.size+' predicted · '+available+' open';
     matchCache={}; matches.forEach(m=>{matchCache[m.matchNumber]=m;});
     sel.innerHTML='<option value="">— choose match —</option>';
@@ -397,22 +409,24 @@ async function loadMatches() {
       const o=document.createElement('option'); o.value=m.matchNumber;
       const already=submittedMatches.has(String(m.matchNumber));
       const started=m.startTime&&new Date(m.startTime)<=now;
-      const locked=already||started;
-      const suffix=already?' ✓':(started?' 🔒':'');
+      const unlocked=unlockedMatches.has(String(m.matchNumber));
+      const locked=already||(started&&!unlocked);
+      let suffix=already?' ✓':(started&&!unlocked?' 🔒':unlocked?' 🧪':'');
       o.textContent=(m.description||'Qualification '+m.matchNumber)+suffix;
       o.disabled=locked; if(locked)o.style.color='#bbb';
       if(String(m.matchNumber)===String(state.matchNumber)&&!locked)o.selected=true; sel.appendChild(o);
     });
-    sel.disabled=false; document.getElementById('btn-match').disabled=!state.matchNumber||submittedMatches.has(String(state.matchNumber))||(matchCache[state.matchNumber]?.startTime&&new Date(matchCache[state.matchNumber].startTime)<=now);
+    sel.disabled=false;
+    const curStarted=state.matchNumber&&matchCache[state.matchNumber]?.startTime&&new Date(matchCache[state.matchNumber].startTime)<=now;
+    const curUnlocked=unlockedMatches.has(String(state.matchNumber));
+    document.getElementById('btn-match').disabled=!state.matchNumber||submittedMatches.has(String(state.matchNumber))||(curStarted&&!curUnlocked);
   } catch(e){statusEl.className='api-status error';statusEl.textContent='Failed: '+e.message;sel.innerHTML='<option value="">— unavailable —</option>';sel.disabled=false;}
 }
 
 function onMatchChange() {
   const sel=document.getElementById('match-select'); state.matchNumber=sel.value;
-  state.matchDescription=(sel.options[sel.selectedIndex]?.textContent||'').replace(/ [✓🔒]$/,'');
-  const now=new Date();
-  const started=state.matchNumber&&matchCache[state.matchNumber]?.startTime&&new Date(matchCache[state.matchNumber].startTime)<=now;
-  document.getElementById('btn-match').disabled=!state.matchNumber||submittedMatches.has(String(state.matchNumber))||started;
+  state.matchDescription=(sel.options[sel.selectedIndex]?.textContent||'').replace(/ [✓🔒🧪]$/,'');
+  document.getElementById('btn-match').disabled=sel.options[sel.selectedIndex]?.disabled||!state.matchNumber;
 }
 
 function goToPrediction() {
@@ -528,8 +542,14 @@ async function initAllianceTab() {
     ]);
     const matches=schedData.Schedule||[];
     const now=new Date();
-    // Locked if ANY match has started
-    qualsLocked=matches.some(m=>m.startTime&&new Date(m.startTime)<=now);
+    // Check alliance override (test mode unlocks regardless of quals)
+    let allianceOverrideActive=false;
+    try {
+      const ovRows=await supa.query('alliance_overrides?event_code=eq.'+state.eventCode+'&is_active=eq.true&select=id');
+      allianceOverrideActive=ovRows.length>0;
+    } catch{}
+    // Locked if ANY match has started AND no override active
+    qualsLocked=matches.some(m=>m.startTime&&new Date(m.startTime)<=now)&&!allianceOverrideActive;
 
     // Extract and sort team numbers
     eventTeams=(teamsData.teams||teamsData.Teams||[]).map(t=>t.teamNumber||t.TeamNumber).filter(Boolean).sort((a,b)=>a-b);
