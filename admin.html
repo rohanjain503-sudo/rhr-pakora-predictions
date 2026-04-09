@@ -91,6 +91,13 @@
     .alliance-pts-badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: #fff8e6; color: #8a6000; font-weight: 600; }
     .user-alliance-row { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 12px; border-bottom: 1px solid #f0f0ee; }
     .user-alliance-row:last-child { border-bottom: none; }
+    .lb-admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .lb-admin-table thead tr { border-bottom: 0.5px solid #e5e5e3; }
+    .lb-admin-table th { font-size: 11px; font-weight: 600; color: #888; text-align: left; padding: 8px 12px; background: #fafaf8; }
+    .lb-admin-table th.right { text-align: right; }
+    .lb-admin-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0ee; }
+    .lb-admin-table tr:last-child td { border-bottom: none; }
+    .lb-admin-wrap { background: #fff; border: 1px solid #e5e5e3; border-radius: 12px; overflow: hidden; }
     .override-badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 6px; font-weight: 600; }
     .override-badge.test { background: #eef4fd; color: #185fa5; }
     .override-badge.rematch { background: #fff0ea; color: #993c1d; }
@@ -140,6 +147,7 @@
       <div class="tab" id="dtab-alliance" onclick="switchDash('alliance')">Alliance</div>
       <div class="tab" id="dtab-users" onclick="switchDash('users')">Users</div>
       <div class="tab" id="dtab-overrides" onclick="switchDash('overrides')">Overrides</div>
+      <div class="tab" id="dtab-leaderboard" onclick="switchDash('leaderboard')">Leaderboard</div>
     </div>
 
     <div id="dash-results">
@@ -181,6 +189,13 @@
           <button class="btn sm" style="width:100%;padding:11px;border-color:#e24b4a;color:#a32d2d;" onclick="endAllianceOverride()">End test</button>
         </div>
       </div>
+    </div>
+
+    <div id="dash-leaderboard" style="display:none;">
+      <div class="api-status" id="lb-loading"></div>
+      <div style="font-size:12px;color:#888;margin-bottom:0.75rem;" id="lb-admin-sub"></div>
+      <div id="lb-admin-card"></div>
+      <div style="font-size:11px;color:#bbb;text-align:center;margin-top:0.75rem;">1st=5pts · 2nd=4pts · 3rd=3pts · 4th=2pts · 5th=1pt per match</div>
     </div>
 
     <button class="btn danger" style="margin-top:2rem;" onclick="adminSignOut()">Sign out</button>
@@ -239,13 +254,14 @@ function switchTab(tab){
   document.getElementById('tab-reg').className='tab'+(tab==='reg'?' active':'');
 }
 function switchDash(tab){
-  ['results','alliance','users','overrides'].forEach(t=>{
+  ['results','alliance','users','overrides','leaderboard'].forEach(t=>{
     document.getElementById('dash-'+t).style.display=t===tab?'block':'none';
     document.getElementById('dtab-'+t).className='tab'+(t===tab?' active':'');
   });
   if(tab==='users')loadUsers();
   if(tab==='alliance')loadAllianceAdminTab();
   if(tab==='overrides')loadOverridesTab();
+  if(tab==='leaderboard')loadAdminLeaderboard();
 }
 async function boot(){const s=loadAdminSession();if(!s){setScreen(0);return;}setScreen(1);loadEvents();}
 
@@ -440,8 +456,14 @@ async function loadAllianceResults(ec){
   panel.innerHTML='<div class="api-status loading" style="display:block;">Checking FIRST API for alliance selections…</div>';
   try{
     const [apiData,allPreds]=await Promise.all([frcFetch(SEASON+'/alliances/'+ec),supa.query('alliance_predictions?event_code=eq.'+ec+'&select=*,users(first_name,last_name)')]);
-    const alliances=apiData.Alliances||[];
-    if(!alliances.length){panel.innerHTML=buildPredsOnlyView(allPreds);return;}
+    // Debug: show raw response so we can see field names
+    const rawJson=JSON.stringify(apiData,null,2);
+    // Try all known field name variants for the alliances array
+    const alliances=apiData.Alliances||apiData.alliances||apiData.AllianceSelections||apiData.allianceSelections||[];
+    if(!alliances.length){
+      panel.innerHTML=buildPredsOnlyView(allPreds)+`<details style="margin-top:1rem;"><summary style="font-size:12px;color:#aaa;cursor:pointer;">Raw API response (debug)</summary><pre style="font-size:10px;color:#888;overflow:auto;max-height:200px;background:#fafaf8;padding:8px;border-radius:8px;margin-top:4px;">${rawJson}</pre></details>`;
+      return;
+    }
     await scoreAlliancePreds(ec,alliances,allPreds);
     panel.innerHTML=buildAllianceScoredView(alliances,allPreds);
   }catch(e){panel.innerHTML=`<div class="api-status error" style="display:block;">Failed: ${e.message}</div>`;}
@@ -453,10 +475,30 @@ function buildPredsOnlyView(preds){
   Object.entries(byUser).forEach(([n,ps])=>{html+=`<div class="user-alliance-row"><span style="font-weight:500;">${n}</span><span style="color:#888;">${ps.length}/8 alliances predicted</span></div>`;});
   return html+'</div></div>';
 }
+function extractAllianceTeams(a){
+  // FIRST API v3 returns picks as array of team number integers
+  // Some versions return objects like {teamNumber:1241} or strings like "frc1241"
+  const raw=a.picks||a.teams||a.Teams||[];
+  return raw.map(t=>{
+    if(typeof t==='number')return t;
+    if(typeof t==='string')return parseInt(t.replace(/[^0-9]/g,''))||null;
+    if(typeof t==='object'&&t!==null)return t.teamNumber||t.TeamNumber||t.number||null;
+    return null;
+  }).filter(Boolean);
+}
+
+function extractAllianceNumber(a){
+  // number field is 1-8 alliance number
+  const n=a.number||a.allianceNumber||a.Number||a.AllianceNumber||a.name;
+  if(typeof n==='string')return parseInt(n.replace(/[^0-9]/g,''));
+  return parseInt(n);
+}
+
 async function scoreAlliancePreds(ec,alliances,preds){
   const actual={};
   for(const a of alliances){
-    const num=parseInt(a.number||a.allianceNumber);const teams=a.picks||a.teams||[];
+    const num=extractAllianceNumber(a);
+    const teams=extractAllianceTeams(a);
     actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};
     try{await supa.query('alliance_results','POST',{event_code:ec,alliance_num:num,captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null});}
     catch(e){try{await supa.query('alliance_results?event_code=eq.'+ec+'&alliance_num=eq.'+num,'PATCH',{captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null,calculated_at:new Date().toISOString()});}catch{}}
@@ -478,7 +520,7 @@ async function scoreAlliancePreds(ec,alliances,preds){
   }
 }
 function buildAllianceScoredView(alliances,preds){
-  const actual={};alliances.forEach(a=>{const num=parseInt(a.number||a.allianceNumber);const teams=a.picks||a.teams||[];actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};});
+  const actual={};alliances.forEach(a=>{const num=extractAllianceNumber(a);const teams=extractAllianceTeams(a);actual[num]={captain:teams[0]||null,pick1:teams[1]||null,pick2:teams[2]||null};});
   const userScores={};
   preds.forEach(p=>{
     const uid=p.user_id;const n=(p.users?.first_name||'')+' '+(p.users?.last_name||'');
@@ -648,6 +690,52 @@ async function endAllianceOverride(){
   try{await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{is_active:false});await refreshAllianceOverrideStatus();}
   catch(e){alert('Failed: '+e.message);}
 }
+
+// ── Admin leaderboard ─────────────────────────────────────────
+async function loadAdminLeaderboard(){
+  const card=document.getElementById('lb-admin-card');
+  const sub=document.getElementById('lb-admin-sub');
+  const loading=document.getElementById('lb-loading');
+  card.innerHTML='';
+  loading.className='api-status loading';loading.textContent='Loading leaderboard…';
+  try{
+    const points=await supa.query('leaderboard_points?select=user_id,points,rank_in_match,users(first_name,last_name)');
+    loading.className='api-status';loading.style.display='none';
+    if(!points.length){card.innerHTML='<div style="padding:1rem;font-size:13px;color:#888;text-align:center;">No points yet.</div>';sub.textContent='';return;}
+    const userMap={};
+    points.forEach(p=>{
+      const uid=p.user_id;
+      if(!userMap[uid])userMap[uid]={name:(p.users?.first_name||'')+' '+(p.users?.last_name||''),total:0,rankCounts:[0,0,0,0,0],matchCount:0};
+      userMap[uid].total+=p.points;
+      userMap[uid].matchCount++;
+      if(p.rank_in_match>=1&&p.rank_in_match<=5)userMap[uid].rankCounts[p.rank_in_match-1]++;
+    });
+    const sorted=Object.entries(userMap).sort(([,a],[,b])=>{
+      if(b.total!==a.total)return b.total-a.total;
+      for(let i=0;i<5;i++){if(b.rankCounts[i]!==a.rankCounts[i])return b.rankCounts[i]-a.rankCounts[i];}
+      return 0;
+    });
+    let rank=1;
+    const ranked=sorted.map(([uid,u],i)=>{
+      if(i>0){const prev=sorted[i-1][1];const tie=prev.total===u.total&&prev.rankCounts.every((v,j)=>v===u.rankCounts[j]);if(!tie)rank=i+1;}
+      return{uid,rank,...u};
+    });
+    sub.textContent=ranked.length+' player(s) · '+new Set(points.map(p=>p.user_id+p.event_code+(p.match_number||''))).size+' match predictions scored';
+    const icon=r=>r===1?'🥇':r===2?'🥈':r===3?'🥉':String(r);
+    card.innerHTML=`<div class="lb-admin-wrap"><table class="lb-admin-table"><thead><tr><th>Rank</th><th>Name</th><th>Matches</th><th>1st</th><th>2nd</th><th>3rd</th><th class="right">Total</th></tr></thead><tbody>`+
+      ranked.map(u=>`<tr>
+        <td style="font-weight:600;color:#888;">${icon(u.rank)}</td>
+        <td style="font-weight:500;">${u.name}</td>
+        <td style="color:#888;font-size:12px;">${u.matchCount}</td>
+        <td style="font-size:12px;color:#888;">${u.rankCounts[0]}</td>
+        <td style="font-size:12px;color:#888;">${u.rankCounts[1]}</td>
+        <td style="font-size:12px;color:#888;">${u.rankCounts[2]}</td>
+        <td style="text-align:right;font-size:16px;font-weight:700;">${u.total}</td>
+      </tr>`).join('')+
+      `</tbody></table></div>`;
+  }catch(e){loading.className='api-status error';loading.textContent='Failed: '+e.message;}
+}
+
 
 boot();
 </script>
