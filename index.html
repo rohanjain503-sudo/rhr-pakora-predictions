@@ -86,6 +86,7 @@
     .lb-table tr.me td { background: #eef4fd; }
     .lb-name { font-size: 14px; font-weight: 500; color: #1a1a1a; }
     .lb-table tr.me .lb-name { color: #1a6bb5; font-weight: 700; }
+    .lb-table tr.me-breakdown td { background: #eef4fd; }
     .lb-pts { font-size: 15px; font-weight: 700; text-align: right; color: #1a1a1a; }
     .coming-soon { text-align: center; padding: 3rem 1rem; color: #aaa; }
     .coming-soon .cs-icon { font-size: 36px; margin-bottom: 0.75rem; }
@@ -231,7 +232,7 @@
     <div id="tab-lb" style="display:none;">
       <div class="section-sub" id="lb-sub"></div>
       <div class="lb-card" id="lb-card"><div class="lb-empty">Loading…</div></div>
-      <div style="font-size:11px;color:#bbb;text-align:center;margin-top:0.75rem;">1st=5pts · 2nd=4pts · 3rd=3pts · 4th=2pts · 5th=1pt per match</div>
+      <div style="font-size:11px;color:#bbb;text-align:center;margin-top:0.75rem;">Match: 1st=5 · 2nd=4 · 3rd=3 · 4th=2 · 5th=1 per match · Alliance: captain=3 · pick1=2 · pick2=1 · all exact=+2 bonus</div>
     </div>
   </div>
 </div>
@@ -492,15 +493,37 @@ async function loadLeaderboard() {
   const card=document.getElementById('lb-card'), sub=document.getElementById('lb-sub');
   card.innerHTML='<div class="lb-empty">Loading…</div>';
   try {
-    const points=await supa.query('leaderboard_points?select=user_id,points,rank_in_match,users(first_name,last_name)');
-    if(!points.length){card.innerHTML='<div class="lb-empty">No points yet — scores are calculated after each match.</div>';sub.textContent='';return;}
+    // Fetch match points, alliance points in parallel
+    const [matchPoints, alliancePoints] = await Promise.all([
+      supa.query('leaderboard_points?select=user_id,points,rank_in_match,event_code,match_number,users(first_name,last_name)'),
+      supa.query('alliance_points?select=user_id,points,event_code,users(first_name,last_name)')
+    ]);
+
+    if(!matchPoints.length&&!alliancePoints.length){
+      card.innerHTML='<div class="lb-empty">No points yet — scores are calculated after each match.</div>';
+      sub.textContent=''; return;
+    }
+
+    // Build user map from match points
     const userMap={};
-    points.forEach(p=>{
+    matchPoints.forEach(p=>{
       const uid=p.user_id;
-      if(!userMap[uid]) userMap[uid]={name:(p.users?.first_name||'')+' '+(p.users?.last_name||''),total:0,rankCounts:[0,0,0,0,0]};
-      userMap[uid].total+=p.points;
+      if(!userMap[uid]) userMap[uid]={name:(p.users?.first_name||'')+' '+(p.users?.last_name||''),matchTotal:0,allianceTotal:0,rankCounts:[0,0,0,0,0],breakdown:[]};
+      userMap[uid].matchTotal+=p.points;
       if(p.rank_in_match>=1&&p.rank_in_match<=5) userMap[uid].rankCounts[p.rank_in_match-1]++;
+      userMap[uid].breakdown.push({event:p.event_code,match:p.match_number,pts:p.points,rank:p.rank_in_match});
     });
+
+    // Merge alliance points
+    alliancePoints.forEach(p=>{
+      const uid=p.user_id;
+      if(!userMap[uid]) userMap[uid]={name:(p.users?.first_name||'')+' '+(p.users?.last_name||''),matchTotal:0,allianceTotal:0,rankCounts:[0,0,0,0,0],breakdown:[]};
+      userMap[uid].allianceTotal+=p.points;
+    });
+
+    // Total = match + alliance
+    Object.values(userMap).forEach(u=>{ u.total=u.matchTotal+u.allianceTotal; });
+
     const sorted=Object.entries(userMap).sort(([,a],[,b])=>{
       if(b.total!==a.total)return b.total-a.total;
       for(let i=0;i<5;i++){if(b.rankCounts[i]!==a.rankCounts[i])return b.rankCounts[i]-a.rankCounts[i];}
@@ -511,11 +534,44 @@ async function loadLeaderboard() {
       if(i>0){const prev=sorted[i-1][1];const tie=prev.total===u.total&&prev.rankCounts.every((v,j)=>v===u.rankCounts[j]);if(!tie)rank=i+1;}
       return{uid,rank,...u};
     });
+
     sub.textContent=ranked.length+' player(s) on the board';
     const icon=r=>r===1?'🥇':r===2?'🥈':r===3?'🥉':String(r);
-    card.innerHTML=`<table class="lb-table"><thead><tr><th>Rank</th><th>Name</th><th class="right">Points</th></tr></thead><tbody>`+
-      ranked.map(u=>`<tr class="${u.uid===state.userId?'me':''}"><td>${icon(u.rank)}</td><td><span class="lb-name">${u.name}${u.uid===state.userId?' (you)':''}</span></td><td class="lb-pts">${u.total}</td></tr>`).join('')+
-      `</tbody></table>`;
+
+    let html=`<table class="lb-table">
+      <thead><tr>
+        <th>Rank</th><th>Name</th>
+        <th class="right" style="font-size:10px;">Match</th>
+        <th class="right" style="font-size:10px;">Alliance</th>
+        <th class="right">Total</th>
+      </tr></thead><tbody>`;
+
+    ranked.forEach(u=>{
+      const isMe=u.uid===state.userId;
+      // Build breakdown rows for current user only
+      let breakdownHtml='';
+      if(isMe&&u.breakdown.length){
+        // Sort breakdown by event+match
+        const sorted=[...u.breakdown].sort((a,b)=>a.event.localeCompare(b.event)||a.match-b.match);
+        breakdownHtml=`<tr class="me-breakdown"><td colspan="5" style="padding:0 12px 8px;background:#eef4fd;">
+          <div style="font-size:11px;color:#1a6bb5;font-weight:500;margin-bottom:4px;">Your match breakdown</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            ${sorted.map(b=>`<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${b.pts>0?'#d4edda':'#f0f0ee'};color:${b.pts>0?'#0d6e44':'#888'};">${b.event} Q${b.match}: ${b.pts>0?'+'+b.pts:'0'}</span>`).join('')}
+          </div>
+          ${u.allianceTotal>0?`<div style="font-size:11px;color:#1a6bb5;margin-top:6px;">Alliance selection: <strong>+${u.allianceTotal} pts</strong></div>`:''}
+        </td></tr>`;
+      }
+      html+=`<tr class="${isMe?'me':''}">
+        <td>${icon(u.rank)}</td>
+        <td><span class="lb-name">${u.name}${isMe?' (you)':''}</span></td>
+        <td class="lb-pts" style="font-size:13px;color:#888;">${u.matchTotal}</td>
+        <td class="lb-pts" style="font-size:13px;color:#888;">${u.allianceTotal||'—'}</td>
+        <td class="lb-pts">${u.total}</td>
+      </tr>${breakdownHtml}`;
+    });
+
+    html+=`</tbody></table>`;
+    card.innerHTML=html;
   } catch(e){card.innerHTML=`<div class="lb-empty">Failed: ${e.message}</div>`;}
 }
 
