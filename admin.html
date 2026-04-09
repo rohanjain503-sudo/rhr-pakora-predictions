@@ -476,20 +476,14 @@ function buildPredsOnlyView(preds){
   return html+'</div></div>';
 }
 function extractAllianceTeams(a){
-  // FIRST API v3 returns picks as array of team number integers
-  // Some versions return objects like {teamNumber:1241} or strings like "frc1241"
-  const raw=a.picks||a.teams||a.Teams||[];
-  return raw.map(t=>{
-    if(typeof t==='number')return t;
-    if(typeof t==='string')return parseInt(t.replace(/[^0-9]/g,''))||null;
-    if(typeof t==='object'&&t!==null)return t.teamNumber||t.TeamNumber||t.number||null;
-    return null;
-  }).filter(Boolean);
+  // FIRST API v3.0 /alliances/:eventCode returns:
+  // name ("Alliance 1"), captain (int), round1 (int), round2 (int)
+  return [a.captain||a.Captain||null, a.round1||a.Round1||a.pick1||null, a.round2||a.Round2||a.pick2||null].filter(Boolean);
 }
 
 function extractAllianceNumber(a){
-  // number field is 1-8 alliance number
-  const n=a.number||a.allianceNumber||a.Number||a.AllianceNumber||a.name;
+  // name field is "Alliance 1", "Alliance 2" etc — extract the integer
+  const n=a.name||a.Name||a.number||a.allianceNumber||a.Number||a.AllianceNumber||'';
   if(typeof n==='string')return parseInt(n.replace(/[^0-9]/g,''));
   return parseInt(n);
 }
@@ -667,9 +661,22 @@ async function saveRematchScore(){
   finally{btn.disabled=false;btn.textContent='Save score';}
 }
 async function endOverride(matchNum){
-  if(!confirm('End override for this match? It will lock again using normal rules.'))return;
-  try{await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'PATCH',{is_active:false});await refreshMatchOverrideStatus();}
-  catch(e){alert('Failed: '+e.message);}
+  const matchLabel=ovMatchCache[matchNum]?.description||('Qualification '+matchNum);
+  const override=await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum+'&is_active=eq.true&select=override_type').catch(()=>[]);
+  const isTest=Array.isArray(override)&&override.length&&override[0].override_type==='test';
+  let confirmMsg='End override for '+matchLabel+'? It will lock again using normal rules.';
+  if(isTest) confirmMsg+='\n\nBecause this was a test, all predictions and leaderboard points for this match will also be removed.';
+  if(!confirm(confirmMsg))return;
+  try{
+    if(isTest){
+      // Remove test predictions and points so they don't affect real leaderboard
+      await supa.query('predictions?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'DELETE');
+      await supa.query('leaderboard_points?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'DELETE');
+      await supa.query('match_results?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'DELETE');
+    }
+    await supa.query('match_overrides?event_code=eq.'+ovEventCode+'&match_number=eq.'+matchNum,'PATCH',{is_active:false});
+    await refreshMatchOverrideStatus();
+  }catch(e){alert('Failed: '+e.message);}
 }
 async function refreshAllianceOverrideStatus(){
   const div=document.getElementById('ov-alliance-status-display');
