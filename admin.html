@@ -707,8 +707,20 @@ async function activateAllianceOverride(){
   }catch(e){alert('Failed: '+e.message);}
 }
 async function endAllianceOverride(){
-  try{await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{is_active:false});await refreshAllianceOverrideStatus();}
-  catch(e){alert('Failed: '+e.message);}
+  if(!confirm('End alliance test for this event?\n\nThis will:\n• Deactivate the override (alliance predictions lock again)\n• Delete all alliance predictions for this event\n• Delete all alliance points for this event\n\nUsers will need to re-submit predictions once the real alliance selection happens.'))return;
+  try{
+    // 1. Deactivate override
+    await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{is_active:false});
+    // 2. Wipe all alliance predictions for this event
+    await supa.query('alliance_predictions?event_code=eq.'+ovEventCode,'DELETE');
+    // 3. Wipe all alliance points for this event
+    await supa.query('alliance_points?event_code=eq.'+ovEventCode,'DELETE');
+    // 4. Wipe alliance results for this event
+    await supa.query('alliance_results?event_code=eq.'+ovEventCode,'DELETE');
+    lbAdminStale=true;
+    await refreshAllianceOverrideStatus();
+    alert('Alliance test ended — predictions, points, and results wiped.');
+  }catch(e){alert('Failed: '+e.message);}
 }
 
 // ── Admin leaderboard ─────────────────────────────────────────
