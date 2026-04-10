@@ -244,6 +244,8 @@ const PROXY = SUPA_URL + '/functions/v1/frc-proxy';
 const TEAM = 1241, SEASON = 2026;
 const state = { userId:null, user:null, eventCode:null, eventName:null, matchNumber:null, matchDescription:null, alliance:null, scoreDelta:null };
 let matchCache={}, submittedMatches=new Set();
+let lbStale=true; // marks leaderboard as needing a refresh
+let lbPollTimer=null;
 let alliancePredictions={}; // allianceNum -> {captain, pick1, pick2}
 let qualsLocked=false; // true when last qual match has started
 let eventTeams=[]; // list of team numbers at the event
@@ -294,8 +296,13 @@ function switchAuthTab(tab) {
 
 function switchMainTab(tab) {
   ['pred','alliance','lb'].forEach(t=>{ document.getElementById('tab-'+t).style.display=t===tab?'block':'none'; document.getElementById('mtab-'+t).className='main-tab'+(t===tab?' active':''); });
-  if(tab==='lb') loadLeaderboard();
   if(tab==='alliance') initAllianceTab();
+  if(tab==='lb') {
+    if(lbStale) loadLeaderboard();
+    startLbPolling();
+  } else {
+    stopLbPolling();
+  }
 }
 
 async function boot() {
@@ -346,6 +353,7 @@ async function userLogin() {
 }
 
 async function signOut() {
+  stopLbPolling();
   const session=loadSession();
   if(session?.access_token){try{await supa.signOut(session.access_token);}catch{}}
   clearSession(); Object.assign(state,{userId:null,user:null,eventCode:null,matchNumber:null,alliance:null,scoreDelta:null});
@@ -474,6 +482,7 @@ async function submitPrediction() {
       <div class="summary-row"><span>Blue</span><span>${[getTeam('Blue1'),getTeam('Blue2'),getTeam('Blue3')].filter(Boolean).join(', ')||'—'}</span></div>
       <div class="summary-row"><span>Winner predicted</span><span><span class="badge ${bc}">${al}</span></span></div>
       <div class="summary-row"><span>Score delta</span><span>${parseInt(state.scoreDelta)}</span></div>`;
+    lbStale=true; // leaderboard needs refresh after new prediction
     showPredStep('step-confirm');
   } catch(e) {
     if(e.message.includes('unique')||e.message.includes('duplicate')){showErr('err-pred','Already submitted for this match.');submittedMatches.add(String(state.matchNumber));}
@@ -489,9 +498,17 @@ function newPrediction() {
   document.getElementById('score-delta').value=''; showPredStep('step-event'); loadEvents();
 }
 
-async function loadLeaderboard() {
+function startLbPolling() {
+  stopLbPolling();
+  lbPollTimer = setInterval(()=>{ loadLeaderboard(true); }, 30000); // refresh every 30s
+}
+function stopLbPolling() {
+  if(lbPollTimer){ clearInterval(lbPollTimer); lbPollTimer=null; }
+}
+
+async function loadLeaderboard(silent=false) {
   const card=document.getElementById('lb-card'), sub=document.getElementById('lb-sub');
-  card.innerHTML='<div class="lb-empty">Loading…</div>';
+  if(!silent) card.innerHTML='<div class="lb-empty">Loading…</div>';
   try {
     // Fetch match points, alliance points in parallel
     const [matchPoints, alliancePoints] = await Promise.all([
@@ -572,6 +589,7 @@ async function loadLeaderboard() {
 
     html+=`</tbody></table>`;
     card.innerHTML=html;
+  lbStale=false;
   } catch(e){card.innerHTML=`<div class="lb-empty">Failed: ${e.message}</div>`;}
 }
 

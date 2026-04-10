@@ -232,6 +232,8 @@ const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 const PROXY=SUPA_URL+'/functions/v1/frc-proxy';
 const TEAM=1241,SEASON=2026,ADMIN_KEY='rhrpakora_admin';
 let matchCache={},adminState={eventCode:null,matchNumber:null,matchDescription:null};
+let lbAdminStale=true;
+let lbAdminPollTimer=null;
 let ovEventCode=null,ovEvents=[],ovMatchCache={},pendingRematchMatchNum=null;
 let allianceAdminEventCode=null,allianceAdminEvents=[];
 
@@ -261,7 +263,12 @@ function switchDash(tab){
   if(tab==='users')loadUsers();
   if(tab==='alliance')loadAllianceAdminTab();
   if(tab==='overrides')loadOverridesTab();
-  if(tab==='leaderboard')loadAdminLeaderboard();
+  if(tab==='leaderboard'){
+    if(lbAdminStale) loadAdminLeaderboard();
+    startAdminLbPolling();
+  } else {
+    stopAdminLbPolling();
+  }
 }
 async function boot(){const s=loadAdminSession();if(!s){setScreen(0);return;}setScreen(1);loadEvents();}
 
@@ -292,6 +299,7 @@ async function adminLogin(){
   finally{btn.disabled=false;btn.textContent='Sign in';}
 }
 function adminSignOut(){
+  stopAdminLbPolling();
   clearAdminSession();matchCache={};ovMatchCache={};
   adminState={eventCode:null,matchNumber:null,matchDescription:null};
   document.getElementById('results-panel').innerHTML='';
@@ -410,6 +418,7 @@ async function calculatePoints(ec,mn,md,sR,sB,ad,ca,preds,fb){
     try{await supa.query('leaderboard_points','POST',{user_id:p.user_id,event_code:ec,match_number:parseInt(mn),points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff});}
     catch(e){try{await supa.query('leaderboard_points?user_id=eq.'+p.user_id+'&event_code=eq.'+ec+'&match_number=eq.'+mn,'PATCH',{points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff,calculated_at:new Date().toISOString()});}catch{}}
   }
+  lbAdminStale=true;
   if(fb){const s=document.getElementById('pts-status');if(s){s.textContent='✓ Points recalculated';s.className='pts-status done';}}
 }
 
@@ -427,6 +436,7 @@ async function recalcPoints(){
     if(!match||match.scoreRedFinal==null){if(s){s.textContent='No scores yet';s.className='pts-status';}return;}
     const rS=match.scoreRedFinal,bS=match.scoreBlueFinal,ad=Math.abs(rS-bS),ca=rS>bS?'red':(bS>rS?'blue':null);
     await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,ad,ca,preds,true);
+    lbAdminStale=true;
   }catch(e){if(s){s.textContent='Failed: '+e.message;s.className='pts-status';}}
 }
 
@@ -699,12 +709,19 @@ async function endAllianceOverride(){
 }
 
 // ── Admin leaderboard ─────────────────────────────────────────
-async function loadAdminLeaderboard(){
+function startAdminLbPolling(){
+  stopAdminLbPolling();
+  lbAdminPollTimer=setInterval(()=>loadAdminLeaderboard(true),30000);
+}
+function stopAdminLbPolling(){
+  if(lbAdminPollTimer){clearInterval(lbAdminPollTimer);lbAdminPollTimer=null;}
+}
+
+async function loadAdminLeaderboard(silent=false){
   const card=document.getElementById('lb-admin-card');
   const sub=document.getElementById('lb-admin-sub');
   const loading=document.getElementById('lb-loading');
-  card.innerHTML='';
-  loading.className='api-status loading';loading.textContent='Loading leaderboard…';
+  if(!silent){card.innerHTML='';loading.className='api-status loading';loading.textContent='Loading leaderboard…';}
   try{
     const points=await supa.query('leaderboard_points?select=user_id,points,rank_in_match,users(first_name,last_name)');
     loading.className='api-status';loading.style.display='none';
@@ -740,6 +757,7 @@ async function loadAdminLeaderboard(){
         <td style="text-align:right;font-size:16px;font-weight:700;">${u.total}</td>
       </tr>`).join('')+
       `</tbody></table></div>`;
+  lbAdminStale=false;
   }catch(e){loading.className='api-status error';loading.textContent='Failed: '+e.message;}
 }
 
