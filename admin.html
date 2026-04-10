@@ -270,7 +270,7 @@ function switchDash(tab){
     stopAdminLbPolling();
   }
 }
-async function boot(){const s=loadAdminSession();if(!s){setScreen(0);return;}setScreen(1);loadEvents();}
+async function boot(){const s=loadAdminSession();if(!s){setScreen(0);return;}setScreen(1);loadEvents();startAutoCalc();}
 
 // ── Auth ──────────────────────────────────────────────────────
 async function adminRegister(){
@@ -283,7 +283,7 @@ async function adminRegister(){
     const existing=await supa.query('admins?select=id&limit=1');
     if(existing.length){showErr('err-reg','Admin already exists.');return;}
     const rows=await supa.query('admins','POST',{first_name:fn,last_name:ln,password:pw});
-    saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();
+    saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();startAutoCalc();
   }catch(e){showErr('err-reg','Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Create admin account';}
 }
@@ -294,12 +294,13 @@ async function adminLogin(){
   try{
     const rows=await supa.query('admins?first_name=eq.'+encodeURIComponent(fn)+'&last_name=eq.'+encodeURIComponent(ln)+'&password=eq.'+encodeURIComponent(pw)+'&select=id,first_name,last_name');
     if(!rows.length){showErr('err-login','Incorrect name or password.');return;}
-    saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();
+    saveAdminSession(rows[0].id,fn,ln);setScreen(1);loadEvents();startAutoCalc();
   }catch(e){showErr('err-login','Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Sign in';}
 }
 function adminSignOut(){
   stopAdminLbPolling();
+  stopAutoCalc();
   clearAdminSession();matchCache={};ovMatchCache={};
   adminState={eventCode:null,matchNumber:null,matchDescription:null};
   document.getElementById('results-panel').innerHTML='';
@@ -358,10 +359,11 @@ async function loadResults(){
   const panel=document.getElementById('results-panel');
   panel.innerHTML='<div class="api-status loading" style="display:block;">Loading…</div>';
   try{
-    const [matchData,predictions,overrideRows]=await Promise.all([
+    const [matchData,predictions,overrideRows,scored]=await Promise.all([
       frcFetch(SEASON+'/matches/'+adminState.eventCode+'?tournamentLevel=Qualification&matchNumber='+adminState.matchNumber),
       supa.query('predictions?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=*,users(first_name,last_name)'),
-      supa.query('match_overrides?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&is_active=eq.true&select=override_type,manual_score_red,manual_score_blue,manual_winner')
+      supa.query('match_overrides?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&is_active=eq.true&select=override_type,manual_score_red,manual_score_blue,manual_winner'),
+      supa.query('match_results?event_code=eq.'+adminState.eventCode+'&match_number=eq.'+adminState.matchNumber+'&select=event_code,match_number')
     ]);
     const activeOverride=Array.isArray(overrideRows)&&overrideRows.length?overrideRows[0]:null;
     let match=(matchData.Matches||[]).find(m=>String(m.matchNumber)===String(adminState.matchNumber));
@@ -377,10 +379,11 @@ async function loadResults(){
     if(match&&match.scoreRedFinal!=null&&match.scoreBlueFinal!=null){
       const rS=match.scoreRedFinal,bS=match.scoreBlueFinal,ad=Math.abs(rS-bS);
       const rW=rS>bS,bW=bS>rS,ca=rW?'red':(bW?'blue':null);
-      await calculatePoints(adminState.eventCode,adminState.matchNumber,adminState.matchDescription,rS,bS,ad,ca,predictions,false);
+      // Check if already scored — auto-calc handles point calculation in background
+      const alreadyScored=scored.find(s=>s.event_code===adminState.eventCode&&String(s.match_number)===String(adminState.matchNumber));
       html+=`<div class="score-row"><div class="score-card red"><div class="winner-tag">${rW?'WINNER':''}</div><div class="score-label">Red Alliance</div><div class="score-num">${rS}</div></div><div class="score-card blue"><div class="winner-tag">${bW?'WINNER':''}</div><div class="score-label">Blue Alliance</div><div class="score-num">${bS}</div></div></div>`;
       html+=`<div class="score-delta-display">Score delta: <strong>${ad}</strong></div>`;
-      html+=`<div class="pts-calc-row"><span class="pts-status done" id="pts-status">✓ Points calculated</span><button class="btn primary sm" onclick="recalcPoints()">Recalculate</button></div>`;
+      html+=`<div class="pts-calc-row"><span class="pts-status ${alreadyScored?'done':''}" id="pts-status">${alreadyScored?'✓ Points calculated':'⏳ Calculating… (auto-calc runs every 2 min)'}</span><button class="btn primary sm" onclick="recalcPoints()">Recalculate now</button></div>`;
       if(predictions.length){
         const ranked=rankPredictions(predictions,ad);
         const c=ranked[0];
@@ -759,6 +762,87 @@ async function loadAdminLeaderboard(silent=false){
       `</tbody></table></div>`;
   lbAdminStale=false;
   }catch(e){loading.className='api-status error';loading.textContent='Failed: '+e.message;}
+}
+
+
+// ── Auto point calculation ────────────────────────────────────
+// Runs every 2 minutes in the background. Finds all matches that
+// have predictions but no scored leaderboard points yet, fetches
+// scores from the FIRST API, and calculates points automatically.
+let autoCalcTimer=null;
+let autoCalcRunning=false;
+
+function startAutoCalc(){
+  stopAutoCalc();
+  runAutoCalc(); // run immediately on login
+  autoCalcTimer=setInterval(runAutoCalc, 2*60*1000); // then every 2 min
+}
+function stopAutoCalc(){
+  if(autoCalcTimer){clearInterval(autoCalcTimer);autoCalcTimer=null;}
+}
+
+async function runAutoCalc(){
+  if(autoCalcRunning)return; // prevent overlap
+  autoCalcRunning=true;
+  try{
+    // 1. Get all unique event+match combos that have predictions
+    const predictions=await supa.query('predictions?select=event_code,match_number,user_id,score_delta,winning_alliance,users(first_name,last_name)');
+    if(!predictions.length){autoCalcRunning=false;return;}
+
+    // 2. Get all already-scored match results
+    const scored=await supa.query('match_results?select=event_code,match_number');
+    const scoredKeys=new Set(scored.map(s=>s.event_code+'|'+s.match_number));
+
+    // 3. Get active rematch overrides (use manual scores)
+    const overrides=await supa.query('match_overrides?is_active=eq.true&select=event_code,match_number,override_type,manual_score_red,manual_score_blue,manual_winner');
+    const overrideMap={};
+    overrides.forEach(o=>{overrideMap[o.event_code+'|'+o.match_number]=o;});
+
+    // 4. Group predictions by event+match
+    const matchMap={};
+    predictions.forEach(p=>{
+      const key=p.event_code+'|'+p.match_number;
+      if(!matchMap[key])matchMap[key]={eventCode:p.event_code,matchNumber:p.match_number,preds:[]};
+      matchMap[key].preds.push(p);
+    });
+
+    // 5. For each unscored match, try to get scores
+    for(const [key,m] of Object.entries(matchMap)){
+      if(scoredKeys.has(key))continue; // already scored, skip
+
+      const ov=overrideMap[key];
+
+      // Rematch with manual scores — use those
+      if(ov&&ov.override_type==='rematch'&&ov.manual_score_red!=null){
+        const rS=ov.manual_score_red,bS=ov.manual_score_blue;
+        const ad=Math.abs(rS-bS),ca=rS>bS?'red':(bS>rS?'blue':null);
+        await calculatePoints(m.eventCode,m.matchNumber,null,rS,bS,ad,ca,m.preds,false);
+        lbAdminStale=true;
+        continue;
+      }
+
+      // Test mode override — skip auto-calc (let admin handle manually)
+      if(ov&&ov.override_type==='test')continue;
+
+      // Pull from FIRST API
+      try{
+        const data=await frcFetch(SEASON+'/matches/'+m.eventCode+'?tournamentLevel=Qualification&matchNumber='+m.matchNumber);
+        const match=(data.Matches||[]).find(mx=>String(mx.matchNumber)===String(m.matchNumber));
+        if(!match||match.scoreRedFinal==null||match.scoreBlueFinal==null)continue; // not played yet
+        const rS=match.scoreRedFinal,bS=match.scoreBlueFinal;
+        const ad=Math.abs(rS-bS),ca=rS>bS?'red':(bS>rS?'blue':null);
+        await calculatePoints(m.eventCode,m.matchNumber,null,rS,bS,ad,ca,m.preds,false);
+        lbAdminStale=true;
+      }catch(e){
+        // Silently skip — will retry next cycle
+        console.warn('Auto-calc failed for',m.eventCode,m.matchNumber,e.message);
+      }
+    }
+  }catch(e){
+    console.warn('Auto-calc error:',e.message);
+  }finally{
+    autoCalcRunning=false;
+  }
 }
 
 
