@@ -528,9 +528,9 @@ async function scoreAlliancePreds(ec,alliances,preds){
     const uid=p.user_id;if(!userPts[uid])userPts[uid]=0;
     const act=actual[p.alliance_num];if(!act)return;
     let pts=0;
-    if(act.captain&&p.captain===act.captain)pts+=3;
+    if(act.captain&&p.captain===act.captain)pts+=1;
     if(act.pick1&&p.pick1===act.pick1)pts+=2;
-    if(act.pick2&&p.pick2===act.pick2)pts+=1;
+    if(act.pick2&&p.pick2===act.pick2)pts+=3;
     if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2)pts+=2;
     userPts[uid]+=pts;
   });
@@ -547,9 +547,9 @@ function buildAllianceScoredView(alliances,preds){
     if(!userScores[uid])userScores[uid]={name:n,total:0};
     const act=actual[p.alliance_num];if(!act)return;
     let pts=0;
-    if(act.captain&&p.captain===act.captain)pts+=3;
+    if(act.captain&&p.captain===act.captain)pts+=1;
     if(act.pick1&&p.pick1===act.pick1)pts+=2;
-    if(act.pick2&&p.pick2===act.pick2)pts+=1;
+    if(act.pick2&&p.pick2===act.pick2)pts+=3;
     if(act.captain&&act.pick1&&act.pick2&&p.captain===act.captain&&p.pick1===act.pick1&&p.pick2===act.pick2)pts+=2;
     userScores[uid].total+=pts;
   });

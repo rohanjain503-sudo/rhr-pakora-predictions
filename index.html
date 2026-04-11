@@ -215,7 +215,7 @@
       <div class="api-status" id="alliance-status"></div>
       <div class="section-sub" id="alliance-sub"></div>
       <div id="alliance-locked-banner" style="display:none;background:#fff0f0;border:1px solid #e24b4a;border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:#a32d2d;">
-        Qualification matches have started — alliance predictions are now locked.
+        Alliance predictions are locked — 5 or fewer qualification matches remaining.
       </div>
       <div id="alliance-event-prompt" style="display:none;">
         <div class="section-sub">Go to the Match tab first and select an event — your alliance predictions will be for that event.</div>
@@ -224,7 +224,7 @@
         <div id="alliance-slots"></div>
         <button class="btn success" id="btn-save-alliances" onclick="saveAlliancePredictions()" style="margin-top:0.5rem;">Save all predictions</button>
         <div class="err-text" id="err-alliance"></div>
-        <div style="font-size:11px;color:#bbb;text-align:center;margin-top:0.75rem;">Captain=3pts · Pick 1=2pts · Pick 2=1pt · All exact=+2 bonus · Max 8pts per alliance</div>
+        <div style="font-size:11px;color:#bbb;text-align:center;margin-top:0.75rem;">Captain=1pt · Pick 1=2pts · Pick 2=3pts · All exact=+2 bonus · Max 8pts per alliance</div>
       </div>
     </div>
 
@@ -622,8 +622,9 @@ async function initAllianceTab() {
       const ovRows=await supa.query('alliance_overrides?event_code=eq.'+state.eventCode+'&is_active=eq.true&select=id');
       allianceOverrideActive=ovRows.length>0;
     } catch{}
-    // Locked if ANY match has started AND no override active
-    qualsLocked=matches.some(m=>m.startTime&&new Date(m.startTime)<=now)&&!allianceOverrideActive;
+    // Lock when 5 or fewer qual matches remain (i.e. haven't started yet)
+    const notStarted=matches.filter(m=>!m.startTime||new Date(m.startTime)>now);
+    qualsLocked=notStarted.length<=5&&!allianceOverrideActive;
 
     // Extract and sort team numbers
     eventTeams=(teamsData.teams||teamsData.Teams||[]).map(t=>t.teamNumber||t.TeamNumber).filter(Boolean).sort((a,b)=>a-b);
@@ -636,7 +637,9 @@ async function initAllianceTab() {
     alliancePredictions={};
     existing.forEach(p=>{alliancePredictions[p.alliance_num]={captain:p.captain,pick1:p.pick1,pick2:p.pick2};});
 
-    subEl.textContent=existing.length+' of 8 alliances predicted for '+state.eventCode+(eventTeams.length?' · '+eventTeams.length+' teams at event':'');
+    const remainingMatches=notStarted.length;
+    const lockWarning=remainingMatches<=8&&!qualsLocked?' · ⚠️ locks in '+remainingMatches+' match'+(remainingMatches===1?'':'es'):'';
+    subEl.textContent=existing.length+' of 8 alliances predicted for '+state.eventCode+(eventTeams.length?' · '+eventTeams.length+' teams':'')+(qualsLocked?' · 🔒 locked':lockWarning);
     buildAllianceSlots(qualsLocked);
     formEl.style.display='block';
     document.getElementById('btn-save-alliances').style.display=qualsLocked?'none':'block';
@@ -668,7 +671,7 @@ function buildAllianceSlots(locked) {
       <div class="alliance-slot-header">ALLIANCE ${i}</div>
       <div class="alliance-inputs">
         <div class="alliance-input-wrap">
-          <label>Captain (3pts)</label>
+          <label>Captain (1pt)</label>
           <select id="a${i}-captain" ${locked?'disabled':''} onchange="onAllianceInput(${i})">
             ${buildTeamOptions(pred.captain)}
           </select>
@@ -680,7 +683,7 @@ function buildAllianceSlots(locked) {
           </select>
         </div>
         <div class="alliance-input-wrap">
-          <label>Pick 2 (1pt)</label>
+          <label>Pick 2 (3pts)</label>
           <select id="a${i}-pick2" ${locked?'disabled':''} onchange="onAllianceInput(${i})">
             ${buildTeamOptions(pred.pick2)}
           </select>
@@ -700,7 +703,7 @@ function onAllianceInput(allianceNum) {
 }
 
 async function saveAlliancePredictions() {
-  if(qualsLocked){showErr('err-alliance','Predictions are locked — quals have started.');return;}
+  if(qualsLocked){showErr('err-alliance','Predictions are locked — 5 or fewer qualification matches remaining.');return;}
   const btn=document.getElementById('btn-save-alliances');
   btn.disabled=true; btn.textContent='Saving…'; showErr('err-alliance','');
   let saved=0, errors=[];
