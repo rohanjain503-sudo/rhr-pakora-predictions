@@ -348,11 +348,24 @@ function onMatchChange(){
   document.getElementById('results-panel').innerHTML='';if(adminState.matchNumber)loadResults();
 }
 
-function rankPredictions(predictions,actualDelta){
-  const withDiff=predictions.map(p=>({...p,diff:Math.abs(p.score_delta-actualDelta)}));
+function rankPredictions(predictions,actualDelta,correctAlliance){
+  // If the alliance is wrong, penalise by adding actualDelta to diff so
+  // wrong-alliance predictions can never rank above correct-alliance ones.
+  // correctAlliance can be 'red', 'blue', or null (tie — all treated as correct).
+  const withDiff=predictions.map(p=>{
+    const rawDiff=Math.abs(p.score_delta-actualDelta);
+    const allianceWrong=correctAlliance&&p.winning_alliance!==correctAlliance;
+    // Wrong alliance: base penalty = actualDelta+1 so worst correct always beats best wrong
+    // Then add rawDiff so wrong-alliance predictions are still ranked amongst themselves
+    const diff=allianceWrong?(actualDelta+1+rawDiff):rawDiff;
+    return{...p,diff,rawDiff,allianceWrong};
+  });
   withDiff.sort((a,b)=>a.diff-b.diff);
   const PM=[5,4,3,2,1];let cr=1;
-  return withDiff.map((p,i)=>{if(i>0&&withDiff[i].diff!==withDiff[i-1].diff)cr=i+1;return{...p,rank:cr,pts:cr<=5?PM[cr-1]:0,deltaDiff:p.diff};});
+  return withDiff.map((p,i)=>{
+    if(i>0&&withDiff[i].diff!==withDiff[i-1].diff)cr=i+1;
+    return{...p,rank:cr,pts:cr<=5?PM[cr-1]:0,deltaDiff:p.rawDiff};
+  });
 }
 
 async function loadResults(){
@@ -385,7 +398,7 @@ async function loadResults(){
       html+=`<div class="score-delta-display">Score delta: <strong>${ad}</strong></div>`;
       html+=`<div class="pts-calc-row"><span class="pts-status ${alreadyScored?'done':''}" id="pts-status">${alreadyScored?'✓ Points calculated':'⏳ Calculating… (auto-calc runs every 2 min)'}</span><button class="btn primary sm" onclick="recalcPoints()">Recalculate now</button></div>`;
       if(predictions.length){
-        const ranked=rankPredictions(predictions,ad);
+        const ranked=rankPredictions(predictions,ad,ca);
         const c=ranked[0];
         if(c){const cn=(c.users?.first_name||'')+' '+(c.users?.last_name||'');html+=`<div class="winner-announce"><div class="w-label">CLOSEST PREDICTION</div><div class="w-name">${cn}${ranked.filter(r=>r.rank===1).length>1?' (tied)':''}</div><div class="w-detail">Delta off by ${c.deltaDiff}</div></div>`;}
         html+=`<div class="table-wrap"><table class="pred-table"><thead><tr><th>Rank</th><th>User</th><th>Alliance</th><th>Delta</th><th>Off by</th><th>Pts</th><th>Result</th></tr></thead><tbody>`;
@@ -417,7 +430,7 @@ async function calculatePoints(ec,mn,md,sR,sB,ad,ca,preds,fb){
   if(!preds.length)return;
   try{await supa.query('match_results','POST',{event_code:ec,match_number:parseInt(mn),match_description:md||null,score_red:sR,score_blue:sB,score_delta:ad,winning_alliance:ca||'tie'});}
   catch(e){try{await supa.query('match_results?event_code=eq.'+ec+'&match_number=eq.'+mn,'PATCH',{score_red:sR,score_blue:sB,score_delta:ad,winning_alliance:ca||'tie',calculated_at:new Date().toISOString()});}catch{}}
-  for(const p of rankPredictions(preds,ad)){
+  for(const p of rankPredictions(preds,ad,ca)){
     try{await supa.query('leaderboard_points','POST',{user_id:p.user_id,event_code:ec,match_number:parseInt(mn),points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff});}
     catch(e){try{await supa.query('leaderboard_points?user_id=eq.'+p.user_id+'&event_code=eq.'+ec+'&match_number=eq.'+mn,'PATCH',{points:p.pts,rank_in_match:p.rank,delta_diff:p.deltaDiff,calculated_at:new Date().toISOString()});}catch{}}
   }
