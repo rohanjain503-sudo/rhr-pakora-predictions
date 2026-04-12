@@ -215,7 +215,7 @@
       <div class="api-status" id="alliance-status"></div>
       <div class="section-sub" id="alliance-sub"></div>
       <div id="alliance-locked-banner" style="display:none;background:#fff0f0;border:1px solid #e24b4a;border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:13px;color:#a32d2d;">
-        Alliance predictions are locked — 6 or fewer qualification matches remaining without scores.
+        Alliance predictions are locked by admin.
       </div>
       <div id="alliance-event-prompt" style="display:none;">
         <div class="section-sub">Go to the Match tab first and select an event — your alliance predictions will be for that event.</div>
@@ -609,28 +609,18 @@ async function initAllianceTab() {
   statusEl.className='api-status loading'; statusEl.textContent='Loading qualification schedule…';
 
   try {
-    // Load schedule, teams, and match results in parallel
-    const [schedData, teamsData, matchResultsData] = await Promise.all([
-      frcFetch(SEASON+'/schedule/'+state.eventCode+'?tournamentLevel=Qualification&teamNumber='+TEAM),
-      frcFetch(SEASON+'/teams?eventCode='+state.eventCode),
-      frcFetch(SEASON+'/matches/'+state.eventCode+'?tournamentLevel=Qualification')
-    ]);
-    const matches=schedData.Schedule||[];
-    const matchResults=matchResultsData.Matches||[];
+    // Load teams (no schedule/results needed — no automatic lock)
+    const teamsData = await frcFetch(SEASON+'/teams?eventCode='+state.eventCode);
 
-    // Count matches that have scores posted
-    const scoredCount=matchResults.filter(m=>m.scoreRedFinal!=null&&m.scoreBlueFinal!=null).length;
-    const unScoredCount=matches.length-scoredCount;
-
-    // Check alliance override
-    let allianceOverrideActive=false;
+    // Check override: test/open = unlocked, close = locked, none = open by default
+    let ovType=null;
     try {
-      const ovRows=await supa.query('alliance_overrides?event_code=eq.'+state.eventCode+'&is_active=eq.true&select=id');
-      allianceOverrideActive=ovRows.length>0;
+      const ovRows=await supa.query('alliance_overrides?event_code=eq.'+state.eventCode+'&select=override_type,is_active');
+      if(ovRows.length){const r=ovRows[0]; ovType=r.is_active?r.override_type:null;}
     } catch{}
 
-    // Lock when 6 or fewer matches have no scores yet (i.e. 6th last match score is available)
-    qualsLocked=unScoredCount<=5&&!allianceOverrideActive;
+    // Locked only if admin explicitly closed
+    qualsLocked = ovType==='close';
 
     // Extract and sort team numbers
     eventTeams=(teamsData.teams||teamsData.Teams||[]).map(t=>t.teamNumber||t.TeamNumber).filter(Boolean).sort((a,b)=>a-b);
@@ -643,8 +633,8 @@ async function initAllianceTab() {
     alliancePredictions={};
     existing.forEach(p=>{alliancePredictions[p.alliance_num]={captain:p.captain,pick1:p.pick1,pick2:p.pick2};});
 
-    const lockWarning=unScoredCount<=8&&!qualsLocked?' · ⚠️ locks in '+unScoredCount+' more result'+(unScoredCount===1?'':'s'):'';
-    subEl.textContent=existing.length+' of 8 alliances predicted for '+state.eventCode+(eventTeams.length?' · '+eventTeams.length+' teams':'')+(qualsLocked?' · 🔒 locked':lockWarning);
+    const statusNote=ovType==='test'?' · 🧪 test mode':ovType==='close'?' · 🔒 locked by admin':ovType==='open'?' · 🔓 opened by admin':'';
+    subEl.textContent=existing.length+' of 8 alliances predicted for '+state.eventCode+(eventTeams.length?' · '+eventTeams.length+' teams':'')+statusNote;
     buildAllianceSlots(qualsLocked);
     formEl.style.display='block';
     document.getElementById('btn-save-alliances').style.display=qualsLocked?'none':'block';
@@ -708,7 +698,7 @@ function onAllianceInput(allianceNum) {
 }
 
 async function saveAlliancePredictions() {
-  if(qualsLocked){showErr('err-alliance','Predictions are locked — 6 or fewer qualification matches without scores remaining.');return;}
+  if(qualsLocked){showErr('err-alliance','Predictions are currently locked by admin.');return;}
   const btn=document.getElementById('btn-save-alliances');
   btn.disabled=true; btn.textContent='Saving…'; showErr('err-alliance','');
   let saved=0, errors=[];

@@ -184,10 +184,12 @@
       <div id="ov-alliance-wrap" style="display:none;margin-top:1rem;border-top:1px solid #e5e5e3;padding-top:1rem;">
         <div style="font-size:13px;font-weight:500;margin-bottom:0.5rem;">Alliance predictions</div>
         <div id="ov-alliance-status-display"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
-          <button class="btn primary sm" style="width:100%;padding:11px;" onclick="activateAllianceOverride()">🧪 Test mode</button>
-          <button class="btn sm" style="width:100%;padding:11px;border-color:#e24b4a;color:#a32d2d;" onclick="endAllianceOverride()">End test</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">
+          <button class="btn primary sm" style="width:100%;padding:11px;" onclick="activateAllianceOverride('test')">🧪 Test mode</button>
+          <button class="btn success sm" style="width:100%;padding:11px;" onclick="activateAllianceOverride('open')">🔓 Open</button>
+          <button class="btn sm" style="width:100%;padding:11px;border-color:#e24b4a;color:#a32d2d;" onclick="activateAllianceOverride('close')">🔒 Close</button>
         </div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px;">Test mode: unlock for testing, end test wipes submissions. Open/Close: manual lock control, no data deleted.</div>
       </div>
     </div>
 
@@ -707,32 +709,62 @@ async function endOverride(matchNum){
 async function refreshAllianceOverrideStatus(){
   const div=document.getElementById('ov-alliance-status-display');
   try{
-    const rows=await supa.query('alliance_overrides?event_code=eq.'+ovEventCode+'&select=is_active');
-    if(rows.length&&rows[0].is_active)div.innerHTML='<span class="override-badge test">🧪 Test mode active — alliance predictions unlocked</span>';
-    else div.innerHTML='<div style="font-size:12px;color:#aaa;">No active alliance override.</div>';
+    const rows=await supa.query('alliance_overrides?event_code=eq.'+ovEventCode+'&select=is_active,override_type');
+    if(!rows.length){
+      div.innerHTML='<div style="font-size:12px;color:#aaa;">No override set — predictions are open by default.</div>';
+      return;
+    }
+    const r=rows[0];
+    if(r.override_type==='test'&&r.is_active){
+      div.innerHTML='<span class="override-badge test">🧪 Test mode active — predictions unlocked for testing</span>';
+    } else if(r.override_type==='open'&&r.is_active){
+      div.innerHTML='<span class="override-badge test" style="background:#f0faf5;color:#0d6e44;">🔓 Manually opened — predictions unlocked</span>';
+    } else if(r.override_type==='close'&&r.is_active){
+      div.innerHTML='<span class="override-badge rematch">🔒 Manually closed — predictions locked</span>';
+    } else {
+      div.innerHTML='<div style="font-size:12px;color:#aaa;">No active override — predictions are open by default.</div>';
+    }
   }catch(e){div.innerHTML='';}
 }
-async function activateAllianceOverride(){
-  try{
-    try{await supa.query('alliance_overrides','POST',{event_code:ovEventCode,override_type:'test',is_active:true});}
-    catch(e){await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{is_active:true,override_type:'test'});}
-    await refreshAllianceOverrideStatus();
-  }catch(e){alert('Failed: '+e.message);}
+async function activateAllianceOverride(type){
+  if(type==='test'){
+    try{
+      try{await supa.query('alliance_overrides','POST',{event_code:ovEventCode,override_type:'test',is_active:true});}
+      catch(e){await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{override_type:'test',is_active:true});}
+      await refreshAllianceOverrideStatus();
+    }catch(e){alert('Failed: '+e.message);}
+    return;
+  }
+  if(type==='open'){
+    try{
+      try{await supa.query('alliance_overrides','POST',{event_code:ovEventCode,override_type:'open',is_active:true});}
+      catch(e){await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{override_type:'open',is_active:true});}
+      await refreshAllianceOverrideStatus();
+    }catch(e){alert('Failed: '+e.message);}
+    return;
+  }
+  if(type==='close'){
+    if(!confirm('Manually close alliance predictions for '+ovEventCode+'?\n\nThis locks predictions but does NOT delete any data.'))return;
+    try{
+      try{await supa.query('alliance_overrides','POST',{event_code:ovEventCode,override_type:'close',is_active:true});}
+      catch(e){await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{override_type:'close',is_active:true});}
+      await refreshAllianceOverrideStatus();
+    }catch(e){alert('Failed: '+e.message);}
+    return;
+  }
 }
+
+// End test mode — wipes test submissions
 async function endAllianceOverride(){
-  if(!confirm('End alliance test for this event?\n\nThis will:\n• Deactivate the override (alliance predictions lock again)\n• Delete all alliance predictions for this event\n• Delete all alliance points for this event\n\nUsers will need to re-submit predictions once the real alliance selection happens.'))return;
+  if(!confirm('End alliance test for '+ovEventCode+'?\n\nThis will:\n• Deactivate the override\n• Delete all alliance predictions for this event\n• Delete all alliance points for this event'))return;
   try{
-    // 1. Deactivate override
     await supa.query('alliance_overrides?event_code=eq.'+ovEventCode,'PATCH',{is_active:false});
-    // 2. Wipe all alliance predictions for this event
     await supa.query('alliance_predictions?event_code=eq.'+ovEventCode,'DELETE');
-    // 3. Wipe all alliance points for this event
     await supa.query('alliance_points?event_code=eq.'+ovEventCode,'DELETE');
-    // 4. Wipe alliance results for this event
     await supa.query('alliance_results?event_code=eq.'+ovEventCode,'DELETE');
     lbAdminStale=true;
     await refreshAllianceOverrideStatus();
-    alert('Alliance test ended — predictions, points, and results wiped.');
+    alert('Test ended — predictions and points wiped.');
   }catch(e){alert('Failed: '+e.message);}
 }
 
