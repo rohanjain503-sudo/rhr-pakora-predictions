@@ -481,20 +481,32 @@ async function onAllianceEventChange(){
 }
 async function loadAllianceResults(ec){
   const panel=document.getElementById('alliance-admin-panel');
-  panel.innerHTML='<div class="api-status loading" style="display:block;">Checking FIRST API for alliance selections…</div>';
+  panel.innerHTML='<div class="api-status loading" style="display:block;">Loading alliance data…</div>';
+
+  // Always load user predictions regardless of API availability
+  let allPreds=[];
+  try{ allPreds=await supa.query('alliance_predictions?event_code=eq.'+ec+'&select=*,users(first_name,last_name)'); }catch(e){}
+
+  // Try FIRST API for actual alliance selections — gracefully handle failure
+  let alliances=[];
+  let apiError=null;
   try{
-    const [apiData,allPreds]=await Promise.all([frcFetch(SEASON+'/alliances/'+ec),supa.query('alliance_predictions?event_code=eq.'+ec+'&select=*,users(first_name,last_name)')]);
-    // Debug: show raw response so we can see field names
-    const rawJson=JSON.stringify(apiData,null,2);
-    // Try all known field name variants for the alliances array
-    const alliances=apiData.Alliances||apiData.alliances||apiData.AllianceSelections||apiData.allianceSelections||[];
-    if(!alliances.length){
-      panel.innerHTML=buildPredsOnlyView(allPreds)+`<details style="margin-top:1rem;"><summary style="font-size:12px;color:#aaa;cursor:pointer;">Raw API response (debug)</summary><pre style="font-size:10px;color:#888;overflow:auto;max-height:200px;background:#fafaf8;padding:8px;border-radius:8px;margin-top:4px;">${rawJson}</pre></details>`;
-      return;
-    }
+    const apiData=await frcFetch(SEASON+'/alliances/'+ec);
+    alliances=apiData.Alliances||apiData.alliances||apiData.AllianceSelections||apiData.allianceSelections||[];
+  }catch(e){
+    apiError=e.message;
+  }
+
+  if(alliances.length){
     await scoreAlliancePreds(ec,alliances,allPreds);
     panel.innerHTML=buildAllianceScoredView(alliances,allPreds);
-  }catch(e){panel.innerHTML=`<div class="api-status error" style="display:block;">Failed: ${e.message}</div>`;}
+  } else {
+    // No alliance data yet (or API error) — show user predictions
+    const notice=apiError
+      ? `<div class="no-data" style="margin-bottom:1rem;">Alliance selection not yet available from FIRST API.</div>`
+      : `<div class="no-data" style="margin-bottom:1rem;">Alliance selection not yet posted — showing submitted predictions.</div>`;
+    panel.innerHTML=notice+buildPredsOnlyView(allPreds);
+  }
 }
 function buildPredsOnlyView(preds){
   if(!preds.length)return'<div class="no-data">No alliance predictions submitted yet.</div>';
